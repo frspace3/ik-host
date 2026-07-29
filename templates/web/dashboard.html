@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, user-scalable=0">
+    <title>IK Host — Dashboard</title>
+    <script src="/static/js/frontend_protection.js?v=2"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.12/codemirror.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.12/theme/dracula.min.css">
+    <script defer src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script defer src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.12/codemirror.min.js"></script>
+    <script defer src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.12/mode/python/python.min.js"></script>
+    <link rel="stylesheet" href="/static/css/dashboard_style.css">
+</head>
+<body>
+
+<!-- ── TOPBAR ─────────────────────────────── -->
+<div class="topbar">
+    <div class="logo">IK<span class="logo-dot">·</span>HOST</div>
+    <div style="display:flex; align-items:center; gap:10px;">
+        {% if days_left is defined %}
+        <div class="trial-counter-box {% if days_left < 10 %}red-status{% else %}green-status{% endif %}">
+            {{ days_left }} Days Left
+        </div>
+        {% endif %}
+        <div class="ram-counter-box" id="topRamUsage" title="Total RAM usage out of 1 GB (1024 MB) hosting limit">
+            RAM: 0.0 MB / 1024 MB
+        </div>
+    </div>
+    <div class="topbar-right">
+        <button class="logout-btn" onclick="location.href='/logout'">
+            <i class="fas fa-sign-out-alt"></i> Logout
+        </button>
+    </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     HOME VIEW
+══════════════════════════════════════════ -->
+<div class="page" id="homeView">
+    <div class="home-header">
+        <div class="home-title">Instances</div>
+        <button class="create-btn" onclick="createServer()">
+            <i class="fas fa-plus"></i> Create
+        </button>
+    </div>
+
+    <div class="bulk-bar" style="display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin-bottom:14px; background:#111; padding:8px 12px; border-radius:6px; border:1px solid var(--border);">
+        <div style="display:flex; align-items:center; margin-right:12px; border-right:1px solid var(--border); padding-right:12px;">
+            <input type="checkbox" id="selectAllServers" onchange="toggleSelectAllServers(this.checked)" style="cursor:pointer; transform:scale(1.2); margin-right:6px;">
+            <label for="selectAllServers" style="font-size:12px; color:#aaa; cursor:pointer; user-select:none;">Select All</label>
+        </div>
+        <button class="bulk-btn blue" onclick="openZipDeploy()">
+            <i class="fas fa-box-open"></i> Select ZIPs
+        </button>
+        <button class="toggle-btn on" id="autoRunToggle" onclick="toggleAutoRun()"
+                title="Auto-Run ON: ZIPs auto-start after deploy">
+            <div class="toggle-track on" id="autoRunTrack">
+                <div class="toggle-thumb"></div>
+            </div>
+            <span id="autoRunLabel">Auto-Run</span>
+        </button>
+        
+        <!-- Selected Actions Panel -->
+        <div id="selectedActionsBar" style="display:none; align-items:center; gap:6px; margin-left:auto; padding-left:12px; border-left:1px solid var(--border);">
+            <span style="font-size:11px; color:#888; margin-right:4px;"><span id="selectedCount" style="color:var(--blue); font-weight:bold;">0</span> selected:</span>
+            <button class="bulk-btn green" onclick="bulkActionSelected('start')" style="padding:4px 8px; font-size:11px;"><i class="fas fa-play"></i> Start</button>
+            <button class="bulk-btn red" onclick="bulkActionSelected('stop')" style="padding:4px 8px; font-size:11px;"><i class="fas fa-stop"></i> Stop</button>
+            <button class="bulk-btn blue" onclick="bulkDownloadSelected()" style="padding:4px 8px; font-size:11px;"><i class="fas fa-download"></i> Download</button>
+            <button class="bulk-btn red" onclick="bulkDeleteServersSelected()" style="padding:4px 8px; font-size:11px;"><i class="fas fa-trash"></i> Delete</button>
+        </div>
+    </div>
+
+    <div id="serverList"></div>
+
+    <div class="deploy-zone" id="deployZone">
+        <h3>📦 Deploy from ZIP or Python (.py)</h3>
+        <p>Drag & drop or upload ZIP / Python files. Each file becomes a server named after it.</p>
+        <button class="deploy-btn" onclick="openZipDeploy()">
+            <i class="fas fa-cloud-upload-alt"></i> Select Files
+        </button>
+        <input type="file" id="zipDeployInput" style="display:none" accept=".zip,.py" multiple onchange="deployZips(this)">
+    </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     MANAGE VIEW
+══════════════════════════════════════════ -->
+<div class="page" id="manageView" style="display:none;">
+
+    <!-- Topbar with inline action buttons -->
+    <div class="manage-topbar">
+        <div class="manage-left">
+            <button class="back-btn" onclick="backToHome()">
+                <i class="fas fa-arrow-left"></i> Back
+            </button>
+            <span class="srv-manage-name" id="manageServerName">—</span>
+            <button class="sm-btn" onclick="renameServerUI()" style="margin-left:4px; padding:3px 6px; font-size:10px; display:inline-flex; align-items:center;" title="Rename Instance">
+                <i class="fas fa-edit"></i>
+            </button>
+            <span class="status-pill offline" id="statusPill" style="margin-left:8px;">OFFLINE</span>
+            <span class="uptime-text" id="uptimeText"></span>
+        </div>
+        <div class="manage-right">
+            <button class="m-btn start" onclick="serverAction('start')">
+                <i class="fas fa-play"></i><span> Start</span>
+            </button>
+            <button class="m-btn" onclick="serverAction('restart')">
+                <i class="fas fa-sync-alt"></i><span> Restart</span>
+            </button>
+            <button class="m-btn stop" onclick="serverAction('stop')">
+                <i class="fas fa-stop"></i><span> Stop</span>
+            </button>
+            <button class="m-btn delete" onclick="deleteServer()">
+                <i class="fas fa-trash"></i><span> Delete Server</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- Suspended warning -->
+    <div class="susp-warn" id="suspWarn">
+        <i class="fas fa-ban"></i> This server is <strong>suspended by Admin</strong>. You cannot start or delete it.
+    </div>
+
+    <!-- Instance Metadata Details Panel -->
+    <div class="instance-details-panel" id="instanceDetailsPanel" style="display:none; margin-bottom:14px; background:var(--card); border:1px solid var(--border); border-radius:8px; padding:12px 16px;">
+        <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap:12px;">
+            <div>
+                <div style="font-size:10px; color:var(--dim); text-transform:uppercase; font-weight:700; margin-bottom:4px;">Project Type</div>
+                <div id="detailProjType" style="font-weight:600; text-transform:uppercase; color:#fff; font-size:11px;">—</div>
+            </div>
+            <div>
+                <div style="font-size:10px; color:var(--dim); text-transform:uppercase; font-weight:700; margin-bottom:4px;">Assigned Port</div>
+                <div id="detailPort" style="font-family:var(--mono); color:#fff; font-size:11px;">—</div>
+            </div>
+            <div>
+                <div style="font-size:10px; color:var(--dim); text-transform:uppercase; font-weight:700; margin-bottom:4px;">Startup Command</div>
+                <div style="display:flex; align-items:center; gap:6px;">
+                    <div id="detailStartup" style="font-family:var(--mono); color:#fff; font-size:11px; word-break:break-all;">—</div>
+                    <button class="sm-btn" onclick="editStartupCommand()" style="padding:2px 4px; font-size:9px;" title="Override Startup Command">
+                        <i class="fas fa-edit"></i>
+                    </button>
+                </div>
+            </div>
+            <div>
+                <div style="font-size:10px; color:var(--dim); text-transform:uppercase; font-weight:700; margin-bottom:4px;">Health Status</div>
+                <div id="detailHealth" style="display:flex; align-items:center; gap:6px; font-size:11px;">—</div>
+            </div>
+            <div>
+                <div style="font-size:10px; color:var(--dim); text-transform:uppercase; font-weight:700; margin-bottom:4px;">Uptime & Restarts</div>
+                <div id="detailUptimeRestarts" style="font-family:var(--mono); color:#fff; font-size:11px;">—</div>
+            </div>
+            <div>
+                <div style="font-size:10px; color:var(--dim); text-transform:uppercase; font-weight:700; margin-bottom:4px;">Auto Restart (BDT)</div>
+                <button class="sm-btn" onclick="configureAutoRestart()" style="padding:3px 6px; font-size:10px; display:inline-flex; align-items:center; gap:4px; font-weight:600;" title="Configure Daily Auto-Restart">
+                    <i class="fas fa-clock"></i> <span id="detailAutoRestart" style="color:var(--dim);">Off</span>
+                </button>
+            </div>
+        </div>
+        <div id="detailUrlContainer" style="margin-top:12px; padding-top:12px; border-top:1px solid var(--border); display:none; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap;">
+            <div style="min-width:0; flex:1;">
+                <div style="font-size:10px; color:var(--dim); text-transform:uppercase; font-weight:700; margin-bottom:4px;">Public URL</div>
+                <div style="font-family:var(--mono); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:11px;"><a id="detailPublicUrl" href="#" target="_blank" style="color:var(--blue); text-decoration:none;">—</a></div>
+            </div>
+            <div style="display:flex; gap:6px;">
+                <button class="sm-btn" onclick="copyPublicUrl()" title="Copy Public URL" style="padding:4px 8px; font-size:10px;">
+                    <i class="fas fa-copy"></i> Copy
+                </button>
+                <button class="sm-btn" onclick="openPublicUrl()" title="Open in Browser" style="padding:4px 8px; font-size:10px;">
+                    <i class="fas fa-external-link-alt"></i> Open
+                </button>
+            </div>
+        </div>
+        <div id="detailEndpointsContainer" style="margin-top:12px; padding-top:12px; border-top:1px solid var(--border); display:none;">
+            <div style="font-size:10px; color:var(--dim); text-transform:uppercase; font-weight:700; margin-bottom:6px;">Example Request List</div>
+            <div id="detailEndpointsList" style="display:flex; flex-direction:column; gap:6px;">
+                <!-- Dynamically populated -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Console -->
+    <div class="console-wrap">
+        <div class="console-hdr">
+            <div class="console-hdr-left">
+                <span class="dot">●</span>
+                <span>CONSOLE</span>
+                <span class="console-srv-name" id="consoleSrvName"></span>
+            </div>
+            <div class="console-hdr-right">
+                <button class="sm-btn" onclick="toggleConsoleExpand()">
+                    <i class="fas fa-expand-alt" id="consoleExpandIcon"></i>
+                </button>
+                <button class="sm-btn on" id="dtToggleBtn" onclick="toggleDateTime()" title="Toggle date/time in logs">
+                    <i class="fas fa-clock"></i> Time
+                </button>
+                <div class="font-size-ctrl">
+                    <button class="fs-btn" onclick="adjustFontSize(-1)" title="Decrease font size">−</button>
+                    <span class="fs-label" id="fsLabel">11</span>
+                    <button class="fs-btn" onclick="adjustFontSize(1)" title="Increase font size">+</button>
+                </div>
+                <button class="sm-btn" id="copyLogBtn" onclick="copyConsole()" title="Copy all logs">
+                    <i class="fas fa-copy"></i> Copy
+                </button>
+                <button class="sm-btn" onclick="clearConsole()">
+                    <i class="fas fa-trash-alt"></i> Clear
+                </button>
+            </div>
+        </div>
+        <div id="console"></div>
+        <div class="cmd-input-wrap">
+            <span class="cmd-prefix">$</span>
+            <input class="cmd-input" id="cmdInput" type="text"
+                   placeholder="Type a command..." autocomplete="off" spellcheck="false"
+                   onkeydown="if(event.key==='Enter'){event.preventDefault();sendCommand();}">
+            <button class="cmd-send-btn" onclick="sendCommand()">Run</button>
+        </div>
+    </div>
+
+    <!-- File Manager (collapsible) -->
+    <div class="fm-section">
+
+        <div class="fm-toggle-header open" id="fmToggleHeader" onclick="toggleFileManager()">
+            <div class="fm-toggle-left">
+                <i class="fas fa-folder" style="color:var(--accent);font-size:11px;"></i>
+                <span class="fm-toggle-title">FILE MANAGER</span>
+            </div>
+            <i class="fas fa-chevron-down fm-toggle-chevron"></i>
+        </div>
+
+        <div class="fm-body" id="fmBody">
+
+            <!-- Toolbar -->
+            <div class="fm-toolbar">
+                <button class="fm-btn" onclick="createNewItem('folder')">
+                    <i class="fas fa-folder-plus"></i> New Folder
+                </button>
+                <button class="fm-btn" onclick="createNewItem('file')">
+                    <i class="fas fa-file-alt"></i> New File
+                </button>
+                <button class="fm-btn" onclick="document.getElementById('fileUpload').click()">
+                    <i class="fas fa-upload"></i> Upload
+                </button>
+                <input type="file" id="fileUpload" style="display:none" onchange="uploadFile(this)">
+                <button class="fm-btn danger" onclick="bulkDeleteSelected()">
+                    <i class="fas fa-trash"></i> Delete
+                </button>
+                <button class="fm-btn" onclick="bulkDownloadFilesSelected()">
+                    <i class="fas fa-download"></i> Download
+                </button>
+                <button class="fm-btn" onclick="bulkZipSelected()">
+                    <i class="fas fa-file-archive"></i> Zip
+                </button>
+                <button class="fm-btn" onclick="openMoveCopyModal('copy')">
+                    <i class="fas fa-copy"></i> Copy
+                </button>
+                <button class="fm-btn" onclick="openMoveCopyModal('move')">
+                    <i class="fas fa-arrows-alt"></i> Move
+                </button>
+            </div>
+
+            <!-- Breadcrumb -->
+            <div class="breadcrumb" id="breadcrumb"></div>
+
+            <!-- File list -->
+            <div class="file-list" id="fileListWrap">
+                <div class="fm-select-all-row">
+                    <input type="checkbox" id="selectAll" onchange="toggleSelectAll(this.checked)">
+                    <label for="selectAll">Select All</label>
+                </div>
+                <div id="fileList"></div>
+            </div>
+
+        </div>
+    </div>
+
+</div>
+
+<!-- ── CODE EDITOR OVERLAY ───────────────── -->
+<div class="editor-overlay" id="editorOverlay">
+    <div class="editor-topbar">
+        <span class="editing-fname" id="editingFilename"></span>
+        <div class="editor-btns">
+            <button class="ed-btn cancel" onclick="closeEditor()">
+                <i class="fas fa-times"></i> Cancel
+            </button>
+            <button class="ed-btn save" onclick="saveFile()">
+                <i class="fas fa-save"></i> Save
+            </button>
+        </div>
+    </div>
+    <textarea id="editorTextarea"></textarea>
+</div>
+
+<!-- ── MOVE/COPY MODAL OVERLAY ───────────────── -->
+<div class="file-move-overlay" id="fileMoveOverlay">
+    <div class="file-move-dialog">
+        <div class="file-move-header">
+            <span class="file-move-title" id="fileMoveTitle">Copy / Move Files</span>
+            <button class="ed-btn cancel" style="padding:4px 8px;" onclick="closeMoveCopyModal()">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <div class="file-move-path" id="fileMovePath">
+            <i class="fas fa-folder-open"></i> root/
+        </div>
+        <div class="file-move-body" id="fileMoveBody">
+            <!-- Folders list loaded dynamically -->
+        </div>
+        <div class="file-move-footer">
+            <button class="ed-btn cancel" onclick="closeMoveCopyModal()">Cancel</button>
+            <button class="ed-btn save" id="fileMovePasteBtn" onclick="executeMoveCopy()">Paste Here</button>
+        </div>
+    </div>
+</div>
+
+<script defer src="/static/js/dashboard_script.js?v=2"></script>
+</body>
+</html>
