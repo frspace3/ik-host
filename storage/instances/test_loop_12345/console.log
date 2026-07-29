@@ -1,0 +1,151 @@
+
+[2026-07-28 04:54:24] 🚀 Instance AUTO_RESTARTED
+[2026-07-28 04:54:24] ✗ Failed to start: database is locked
+
+[2026-07-28 04:54:30] ✗ CRASH DETECTED (PID 999999 is dead)
+[2026-07-28 04:54:30] 🛑 Max auto-restart attempts reached (1 attempt). Server marked as CRASHED.
+
+[2026-07-28 04:54:30] 🚀 Instance RESTARTED
+
+[2026-07-28 14:16:59] ✗ CRASH DETECTED (PID 999999 is dead)
+[2026-07-28 14:16:59] 🔄 Auto-restarting (Attempt 1/1, Backoff Delay: 5s)...
+
+[2026-07-28 14:16:59] 🚀 Instance AUTO_RESTARTED
+[2026-07-28 14:16:59] ✗ Failed to start: database is locked
+
+[2026-07-28 14:17:04] ✗ CRASH DETECTED (PID 999999 is dead)
+[2026-07-28 14:17:04] 🛑 Max auto-restart attempts reached (1 attempt). Server marked as CRASHED.
+
+[2026-07-28 14:17:04] 🚀 Instance RESTARTED
+
+[2026-07-28 14:40:15] ✗ CRASH DETECTED (PID 999999 is dead)
+[2026-07-28 14:40:15] 🔄 Auto-restarting (Attempt 1/1, Backoff Delay: 5s)...
+
+[2026-07-28 14:40:15] 🚀 Instance AUTO_RESTARTED
+[2026-07-28 14:40:15] ✗ Failed to start: database is locked
+
+[2026-07-28 14:40:21] ✗ CRASH DETECTED (PID 999999 is dead)
+[2026-07-28 14:40:21] 🛑 Max auto-restart attempts reached (1 attempt). Server marked as CRASHED.
+
+[2026-07-28 14:40:21] 🚀 Instance RESTARTED
+
+[2026-07-28 15:36:42] ✗ CRASH DETECTED (PID 999999 is dead)
+[2026-07-28 15:36:42] 🔄 Auto-restarting (Attempt 1/1, Backoff Delay: 5s)...
+
+[2026-07-28 15:36:42] 🚀 Instance AUTO_RESTARTED
+[2026-07-28 15:36:42] ✗ Failed to start: database is locked
+
+[2026-07-28 15:36:48] ✗ CRASH DETECTED (PID 999999 is dead)
+[2026-07-28 15:36:48] 🛑 Max auto-restart attempts reached (1 attempt). Server marked as CRASHED.
+
+[2026-07-28 15:36:48] 🚀 Instance RESTARTED
+
+[2026-07-29 01:26:48] ✗ CRASH DETECTED (PID 999999 is dead)
+[2026-07-29 01:26:48] 🔄 Auto-restarting (Attempt 1/1, Backoff Delay: 5s)...
+
+[2026-07-29 01:26:48] 🚀 Instance AUTO_RESTARTED
+[2026-07-29 01:26:48] ✗ Failed to start: database is locked
+
+[2026-07-29 01:26:53] ✗ CRASH DETECTED (PID 999999 is dead)
+[2026-07-29 01:26:53] 🛑 Max auto-restart attempts reached (1 attempt). Server marked as CRASHED.
+
+[2026-07-29 01:26:53] 🚀 Instance RESTARTED
+
+[2026-07-29 01:39:56] ✗ CRASH DETECTED (PID 999999 is dead)
+[2026-07-29 01:39:56] 🔄 Auto-restarting (Attempt 1/1, Backoff Delay: 5s)...
+
+[2026-07-29 01:39:56] 🚀 Instance AUTO_RESTARTED
+[2026-07-29 01:39:56] ✗ Failed to start: database is locked
+
+[2026-07-29 01:40:02] ✗ CRASH DETECTED (PID 999999 is dead)
+[2026-07-29 01:40:02] 🛑 Max auto-restart attempts reached (1 attempt). Server marked as CRASHED.
+
+[2026-07-29 01:40:02] 🚀 Instance RESTARTED
+
+[2026-07-29 01:55:28] ✗ CRASH DETECTED (PID 999999 is dead)
+[2026-07-29 01:55:28] 🔄 Auto-restarting (Attempt 1/1, Backoff Delay: 5s)...
+
+[2026-07-29 01:55:28] 🚀 Instance AUTO_RESTARTED
+[2026-07-29 01:55:28] ✗ Failed to start: database is locked
+
+[2026-07-29 01:55:34] ✗ CRASH DETECTED (PID 999999 is dead)
+[2026-07-29 01:55:34] 🛑 Max auto-restart attempts reached (1 attempt). Server marked as CRASHED.
+
+[2026-07-29 01:55:34] 🚀 Instance RESTARTED
+
+[2026-07-29 04:16:55] ✗ CRASH DETECTED (PID 999999 is dead)
+[2026-07-29 04:16:55] 🔄 Auto-restarting (Attempt 1/1, Backoff Delay: 5s)...
+
+[2026-07-29 04:16:55] 🚀 Instance AUTO_RESTARTED
+[2026-07-29 04:16:55] ✗ Failed to start: database is locked
+
+[2026-07-29 04:17:00] ✗ CRASH DETECTED (PID 999999 is dead)
+[2026-07-29 04:17:00] 🛑 Max auto-restart attempts reached (1 attempt). Server marked as CRASHED.
+
+[2026-07-29 04:17:00] 🚀 Instance RESTARTED
+
+[2026-07-29 04:23:51] ✗ CRASH DETECTED (PID 999999 is dead)
+[2026-07-29 04:23:51] 🔄 Auto-restarting (Attempt 1/1, Backoff Delay: 5s)...
+
+[2026-07-29 04:23:51] 🚀 Instance AUTO_RESTARTED
+[2026-07-29 04:23:51] ✗ Failed to start: database is locked
+
+[2026-07-29 04:23:57] ✗ CRASH DETECTED (PID 999999 is dead)
+[2026-07-29 04:23:57] 🛑 Max auto-restart attempts reached (1 attempt). Server marked as CRASHED.
+
+[2026-07-29 04:23:57] 🚀 Instance RESTARTED
+
+[2026-07-29 04:25:08] ✗ CRASH DETECTED (PID 999999 is dead)
+[2026-07-29 04:25:08] 🔄 Auto-restarting (Attempt 1/1, Backoff Delay: 5s)...
+
+[2026-07-29 04:25:08] 🚀 Instance AUTO_RESTARTED
+[2026-07-29 04:25:08] ✗ Failed to start: database is locked
+
+[2026-07-29 04:25:14] ✗ CRASH DETECTED (PID 999999 is dead)
+[2026-07-29 04:25:14] 🛑 Max auto-restart attempts reached (1 attempt). Server marked as CRASHED.
+
+[2026-07-29 04:25:14] 🚀 Instance RESTARTED
+
+[2026-07-29 04:27:48] ✗ CRASH DETECTED (PID 999999 is dead)
+[2026-07-29 04:27:48] 🔄 Auto-restarting (Attempt 1/1, Backoff Delay: 5s)...
+
+[2026-07-29 04:27:48] 🚀 Instance AUTO_RESTARTED
+[2026-07-29 04:27:48] ✗ Failed to start: database is locked
+
+[2026-07-29 04:27:53] ✗ CRASH DETECTED (PID 999999 is dead)
+[2026-07-29 04:27:53] 🛑 Max auto-restart attempts reached (1 attempt). Server marked as CRASHED.
+
+[2026-07-29 04:27:54] 🚀 Instance RESTARTED
+
+[2026-07-29 04:39:12] ✗ CRASH DETECTED (PID 999999 is dead)
+[2026-07-29 04:39:12] 🔄 Auto-restarting (Attempt 1/1, Backoff Delay: 5s)...
+
+[2026-07-29 04:39:12] 🚀 Instance AUTO_RESTARTED
+[2026-07-29 04:39:12] ✗ Failed to start: database is locked
+
+[2026-07-29 04:39:18] ✗ CRASH DETECTED (PID 999999 is dead)
+[2026-07-29 04:39:18] 🛑 Max auto-restart attempts reached (1 attempt). Server marked as CRASHED.
+
+[2026-07-29 04:39:18] 🚀 Instance RESTARTED
+
+[2026-07-29 04:54:58] ✗ CRASH DETECTED (PID 999999 is dead)
+[2026-07-29 04:54:58] 🔄 Auto-restarting (Attempt 1/1, Backoff Delay: 5s)...
+
+[2026-07-29 04:54:58] 🚀 Instance AUTO_RESTARTED
+[2026-07-29 04:54:58] ✗ Failed to start: database is locked
+
+[2026-07-29 04:55:04] ✗ CRASH DETECTED (PID 999999 is dead)
+[2026-07-29 04:55:04] 🛑 Max auto-restart attempts reached (1 attempt). Server marked as CRASHED.
+
+[2026-07-29 04:55:04] 🚀 Instance RESTARTED
+
+[2026-07-29 13:39:13] ✗ CRASH DETECTED (PID 999999 is dead)
+[2026-07-29 13:39:13] 🔄 Auto-restarting (Attempt 1/1, Backoff Delay: 5s)...
+
+[2026-07-29 13:39:13] 🚀 Instance AUTO_RESTARTED
+[2026-07-29 13:39:13] ✗ Failed to start: database is locked
+
+[2026-07-29 13:39:18] ✗ CRASH DETECTED (PID 999999 is dead)
+[2026-07-29 13:39:18] 🛑 Max auto-restart attempts reached (1 attempt). Server marked as CRASHED.
+
+[2026-07-29 13:39:18] 🚀 Instance RESTARTED
