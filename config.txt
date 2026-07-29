@@ -1,0 +1,11 @@
+bot token = 8920975451:AAFUb67HCIvbcK48bjAgqamORFjnwyPtIOY
+owner id = 1900291825
+report at = 06:30 AM
+zip_delay = 60
+user = imran
+password = 554961
+
+#Admin Panel Credentials
+#These credentials are used to access the administrator panel route (/admin/login / /admin/panel) and are stored in the admin_settings database table:
+Admin Panel Username= imran112233
+Admin Panel Password= imran112233
