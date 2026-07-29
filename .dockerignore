@@ -1,0 +1,23 @@
+# Version control
+.git
+.gitignore
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+
+# Test/scratch files
+test_out.log
+*.log
+
+# Large unnecessary files
+project_detector.zip
+
+# IDE files
+.vscode/
+.idea/
+
+# OS files
+.DS_Store
+Thumbs.db
