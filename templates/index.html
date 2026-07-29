@@ -1,0 +1,840 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, user-scalable=0">
+    <title>IK Host — State-of-the-Art Bot Hosting Platform</title>
+    <script src="/static/js/frontend_protection.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Fira+Code:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --bg: #030206;
+            --card-bg: rgba(13, 9, 21, 0.65);
+            --card-hover: rgba(22, 15, 34, 0.85);
+            --border: rgba(179, 134, 217, 0.15);
+            --border-hover: rgba(179, 134, 217, 0.4);
+            --accent: #b386d9;
+            --accent-glow: rgba(179, 134, 217, 0.25);
+            --text: #e2dff0;
+            --text-muted: #8d85a3;
+            --red: #ff3b30;
+            --green: #34c759;
+            --blue: #007aff;
+            --font-sans: 'Outfit', sans-serif;
+            --font-mono: 'Fira Code', monospace;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: var(--font-sans);
+            line-height: 1.6;
+            overflow-x: hidden;
+            min-height: 100vh;
+        }
+
+        /* Ambient background glow effects */
+        .ambient-glow {
+            position: fixed;
+            width: 600px;
+            height: 600px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(142, 68, 173, 0.08) 0%, rgba(0,0,0,0) 70%);
+            top: -200px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 0;
+            pointer-events: none;
+            filter: blur(80px);
+        }
+
+        /* 3D reacts background canvas */
+        canvas#sceneCanvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: 1;
+            pointer-events: none;
+            opacity: 0.95;
+        }
+
+        /* Grid lines overlay */
+        .grid-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: 
+                linear-gradient(rgba(179, 134, 217, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(179, 134, 217, 0.03) 1px, transparent 1px);
+            background-size: 50px 50px;
+            background-position: center;
+            z-index: 2;
+            pointer-events: none;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 0 24px;
+            position: relative;
+            z-index: 10;
+        }
+
+        /* ── HEADER NAVIGATION ────────────────────── */
+        header {
+            position: sticky;
+            top: 20px;
+            z-index: 100;
+            margin-bottom: 60px;
+        }
+
+        nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 14px 28px;
+            border-radius: 16px;
+            background: rgba(13, 9, 21, 0.4);
+            border: 1px solid var(--border);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+            transition: all 0.3s ease;
+        }
+
+        nav:hover {
+            border-color: rgba(179, 134, 217, 0.25);
+            box-shadow: 0 8px 32px rgba(179, 134, 217, 0.05);
+        }
+
+        .logo {
+            font-size: 22px;
+            font-weight: 800;
+            letter-spacing: 1.5px;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .logo-dot {
+            color: var(--accent);
+            animation: pulse-dot 2s infinite;
+        }
+
+        @keyframes pulse-dot {
+            0%, 100% { opacity: 0.3; transform: scale(0.9); }
+            50% { opacity: 1; transform: scale(1.15); }
+        }
+
+        .btn-login {
+            background: rgba(179, 134, 217, 0.08);
+            color: #fff;
+            padding: 9px 24px;
+            border-radius: 10px;
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 600;
+            border: 1px solid var(--border);
+            transition: all 0.3s ease;
+        }
+
+        .btn-login:hover {
+            background: var(--accent);
+            color: #07050a;
+            border-color: var(--accent);
+            box-shadow: 0 0 15px rgba(179, 134, 217, 0.4);
+            transform: translateY(-1px);
+        }
+
+        /* ── HERO SECTION ─────────────────────────── */
+        .hero {
+            text-align: center;
+            padding: 80px 0 100px;
+            position: relative;
+        }
+
+        /* Floating tech pill badge */
+        .hero-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(179, 134, 217, 0.06);
+            border: 1px solid var(--border);
+            padding: 6px 16px;
+            border-radius: 30px;
+            color: var(--accent);
+            font-size: 13px;
+            font-weight: 500;
+            margin-bottom: 28px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            animation: float-badge 3s ease-in-out infinite;
+        }
+
+        @keyframes float-badge {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-5px); }
+        }
+
+        .hero-badge i {
+            font-size: 11px;
+        }
+
+        .hero h1 {
+            font-size: clamp(38px, 9vw, 62px);
+            font-weight: 800;
+            color: #fff;
+            letter-spacing: -1.5px;
+            line-height: 1.1;
+            margin-bottom: 24px;
+        }
+
+        .hero h1 span {
+            background: linear-gradient(135deg, var(--green) 0%, var(--blue) 50%, var(--red) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            position: relative;
+        }
+
+        .hero p {
+            color: var(--text-muted);
+            font-size: 19px;
+            max-width: 580px;
+            margin: 0 auto 44px;
+            font-weight: 300;
+            line-height: 1.6;
+        }
+
+        .main-btns {
+            display: flex;
+            gap: 18px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .btn-main {
+            padding: 15px 38px;
+            border-radius: 12px;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 15px;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            border: 1px solid var(--border);
+            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            cursor: pointer;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #9b59b6 0%, #6c3483 100%);
+            color: #fff;
+            border: none;
+            box-shadow: 0 6px 20px rgba(155, 89, 182, 0.35);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(155, 89, 182, 0.5);
+            filter: brightness(1.1);
+        }
+
+        .btn-secondary {
+            background: rgba(18, 14, 26, 0.4);
+            color: var(--text);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(60, 50, 74, 0.5);
+            border-color: var(--accent);
+            transform: translateY(-3px);
+            box-shadow: 0 6px 20px rgba(179, 134, 217, 0.08);
+        }
+
+        /* ── FEATURES GRID ───────────────────────── */
+        .features {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 28px;
+            margin: 80px 0;
+        }
+
+        .card {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            padding: 40px 32px;
+            border-radius: 16px;
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* Neon card top glow line */
+        .card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, var(--accent), transparent);
+            transform: translateX(-100%);
+            transition: transform 0.5s ease;
+        }
+
+        .card:hover::before {
+            transform: translateX(100%);
+        }
+
+        .card:hover {
+            background: var(--card-hover);
+            transform: translateY(-6px);
+            border-color: var(--border-hover);
+            box-shadow: 0 15px 35px rgba(179, 134, 217, 0.08);
+        }
+
+        .card-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            background: rgba(179, 134, 217, 0.08);
+            border: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 24px;
+            color: var(--accent);
+            font-size: 20px;
+            transition: all 0.3s ease;
+        }
+
+        .card:hover .card-icon {
+            background: var(--accent);
+            color: #07050a;
+            box-shadow: 0 0 15px rgba(179, 134, 217, 0.3);
+            transform: rotate(-5deg) scale(1.05);
+        }
+
+        .card h3 {
+            color: #fff;
+            margin-bottom: 14px;
+            font-size: 20px;
+            font-weight: 700;
+        }
+
+        .card p {
+            color: var(--text-muted);
+            font-size: 14.5px;
+            font-weight: 300;
+            line-height: 1.6;
+        }
+
+        /* ── CONTACT CTA ──────────────────────────── */
+        .contact {
+            text-align: center;
+            padding: 70px 40px;
+            background: linear-gradient(135deg, rgba(13, 9, 21, 0.8) 0%, rgba(20, 10, 35, 0.8) 100%);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            margin: 80px 0;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+        }
+
+        /* Tech decorative elements on CTA card */
+        .contact::after {
+            content: '';
+            position: absolute;
+            width: 100px;
+            height: 100px;
+            background: radial-gradient(circle, rgba(179, 134, 217, 0.15) 0%, rgba(0,0,0,0) 70%);
+            bottom: -50px;
+            right: -50px;
+        }
+
+        .contact h2 {
+            color: #fff;
+            font-weight: 700;
+            font-size: 28px;
+            margin-bottom: 12px;
+        }
+
+        .contact p {
+            color: var(--text-muted);
+            margin-bottom: 35px;
+            font-size: 16px;
+            font-weight: 300;
+        }
+
+        /* ── FOOTER ───────────────────────────────── */
+        footer {
+            text-align: center;
+            padding: 60px 0 40px;
+            color: var(--text-muted);
+            font-size: 13.5px;
+            border-top: 1px solid var(--border);
+            font-weight: 300;
+            letter-spacing: 0.5px;
+        }
+
+        footer span {
+            color: var(--accent);
+            font-weight: 500;
+        }
+
+        @media (max-width: 768px) {
+            header { top: 12px; margin-bottom: 40px; }
+            nav { padding: 12px 20px; }
+            .hero { padding: 50px 0 60px; }
+            .btn-main { width: 100%; justify-content: center; }
+            .features { gap: 20px; margin: 50px 0; }
+            .contact { padding: 50px 24px; }
+        }
+    </style>
+</head>
+<body>
+    <!-- Ambient top glow -->
+    <div class="ambient-glow"></div>
+
+    <!-- 3D reacts background canvas -->
+    <canvas id="sceneCanvas"></canvas>
+
+    <!-- Sci-fi network grid overlay -->
+    <div class="grid-overlay"></div>
+
+    <div class="container">
+        <!-- Floating Header -->
+        <header>
+            <nav style="justify-content: center;">
+                <div class="logo">IK<span class="logo-dot"><i class="fa-solid fa-circle"></i></span>HOST</div>
+            </nav>
+        </header>
+
+        <!-- Hero Section -->
+        <div class="hero">
+            <div class="hero-badge">
+                <i class="fa-solid fa-bolt"></i> Python 3.12 Optimized Environment
+            </div>
+            <h1>Simple <span>Bot Hosting</span><br>for Developers</h1>
+            <p>Deploy Python bots, manage source code, and monitor performance recursively — with zero distractions.</p>
+            
+            <div class="main-btns">
+                <a href="/login" onclick="launchConsole(event)" class="btn-main btn-primary">
+                    <i class="fa-solid fa-terminal"></i> Launch Console →
+                </a>
+                <a href="https://t.me/imran_kaiser1" class="btn-main btn-secondary" target="_blank">
+                    <i class="fa-solid fa-headset"></i> Contact Admin
+                </a>
+            </div>
+        </div>
+
+        <!-- Glassmorphism Features -->
+        <div class="features">
+            <div class="card">
+                <div class="card-icon"><i class="fa-brands fa-python"></i></div>
+                <h3>Python Ready</h3>
+                <p>Optimized virtual environment structures with automatic package installations and sitecustomize overrides.</p>
+            </div>
+            <div class="card">
+                <div class="card-icon"><i class="fa-solid fa-gauge-high"></i></div>
+                <h3>Fast Storage</h3>
+                <p>NVMe SSD structures ensure ultra-low disk latency read/writes for database synchronization.</p>
+            </div>
+            <div class="card">
+                <div class="card-icon"><i class="fa-solid fa-shield-halved"></i></div>
+                <h3>Basic Protection</h3>
+                <p>DDoS traffic scrubbing keeps your services and web endpoints reachable without disruption.</p>
+            </div>
+        </div>
+
+        <!-- Call-to-action Section -->
+        <div class="contact">
+            <h2>Need help or Custom limits?</h2>
+            <p>Connect with the system architect directly on Telegram for configurations setup.</p>
+            <a href="https://t.me/imran_kaiser1" class="btn-main btn-primary" style="padding:15px 50px;" target="_blank">
+                <i class="fa-brands fa-telegram"></i> @imran_kaiser1
+            </a>
+        </div>
+
+        <!-- Footer -->
+        <footer>
+            IK Host — Designed & Developed by <span>Imran Kaiser</span><br>
+            © 2026 All rights reserved.
+        </footer>
+    </div>
+
+    <script>
+        // ─── Launch Console Telegram Redirect logic ──────────────────
+        function launchConsole(event) {
+            event.preventDefault();
+            const hasRedirected = localStorage.getItem('console_launch_redirected');
+            if (!hasRedirected) {
+                // First click: Redirect to Telegram channel
+                localStorage.setItem('console_launch_redirected', 'true');
+                window.location.href = 'https://t.me/imran_kaiser2';
+            } else {
+                // Second click: Redirect to Login page
+                window.location.href = '/login';
+            }
+        }
+
+        // ─── 3D Reacting hosting cloud canvas animation ───────────────
+        const canvas = document.getElementById('sceneCanvas');
+        const ctx = canvas.getContext('2d');
+        
+        let time = 0;
+        let particles = [];
+        
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+
+        // Initialize moving starfield
+        function initParticles() {
+            particles = [];
+            for (let i = 0; i < 45; i++) {
+                particles.push({
+                    x: Math.random(),
+                    y: Math.random(),
+                    size: Math.random() * 2.2 + 0.8,
+                    speed: Math.random() * 0.012 + 0.004,
+                    color: ['#34c759', '#ff3b30', '#007aff'][Math.floor(Math.random() * 3)],
+                    angle: Math.random() * Math.PI * 2
+                });
+            }
+        }
+        initParticles();
+
+        // Draw isometric server blocks with high-fidelity shading
+        function drawServerBlock(ctx, x, y, wx, wy, h, baseColor, accentColor, lights) {
+            // Left Face (shaded dark)
+            ctx.beginPath();
+            ctx.moveTo(x, y);
+            ctx.lineTo(x - wx, y + wx * 0.5);
+            ctx.lineTo(x - wx, y + wx * 0.5 + h);
+            ctx.lineTo(x, y + h);
+            ctx.closePath();
+            ctx.fillStyle = baseColor.left;
+            ctx.fill();
+
+            // Right Face (shaded medium)
+            ctx.beginPath();
+            ctx.moveTo(x, y);
+            ctx.lineTo(x + wy, y + wy * 0.5);
+            ctx.lineTo(x + wy, y + wy * 0.5 + h);
+            ctx.lineTo(x, y + h);
+            ctx.closePath();
+            ctx.fillStyle = baseColor.right;
+            ctx.fill();
+
+            // Top Face (lightest)
+            ctx.beginPath();
+            ctx.moveTo(x, y);
+            ctx.lineTo(x - wx, y + wx * 0.5);
+            ctx.lineTo(x - wx + wy, y + wx * 0.5 + wy * 0.5);
+            ctx.lineTo(x + wy, y + wy * 0.5);
+            ctx.closePath();
+            ctx.fillStyle = baseColor.top;
+            ctx.fill();
+            
+            // Draw horizontal metallic panel divisions (lines)
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.04)';
+            ctx.lineWidth = 1;
+            
+            // Draw front lines on Left Face
+            for (let i = 1; i <= 3; i++) {
+                let py = y + (h * 0.25) * i;
+                ctx.beginPath();
+                ctx.moveTo(x - wx, py + wx * 0.5);
+                ctx.lineTo(x, py);
+                ctx.stroke();
+            }
+
+            // Draw front lines on Right Face
+            for (let i = 1; i <= 3; i++) {
+                let py = y + (h * 0.25) * i;
+                ctx.beginPath();
+                ctx.moveTo(x, py);
+                ctx.lineTo(x + wy, py + wy * 0.5);
+                ctx.stroke();
+            }
+
+            // Draw front glowing ports & LEDs (blinking)
+            if (lights) {
+                // Glow panel border
+                ctx.strokeStyle = accentColor;
+                ctx.lineWidth = 1.5;
+                ctx.shadowColor = accentColor;
+                ctx.shadowBlur = 4;
+                
+                // Highlight top perimeter
+                ctx.beginPath();
+                ctx.moveTo(x, y);
+                ctx.lineTo(x + wy, y + wy * 0.5);
+                ctx.stroke();
+                ctx.shadowBlur = 0;
+
+                // Blinking LEDs
+                for (let i = 0; i < lights.length; i++) {
+                    let ly = y + h * 0.18 + i * (h * 0.23);
+                    let lx = x + wy * 0.38;
+                    let lColor = lights[i];
+                    ctx.beginPath();
+                    ctx.arc(lx, ly + wy * 0.19, 3, 0, Math.PI * 2);
+                    ctx.fillStyle = lColor;
+                    
+                    // Blinking glow math
+                    ctx.shadowColor = lColor;
+                    ctx.shadowBlur = 8 + Math.sin(time * 6 + i * 2) * 5;
+                    ctx.fill();
+                    ctx.shadowBlur = 0;
+                }
+            }
+        }
+
+        // Draw isometric mobile screen with floating data lines
+        function drawPhone(ctx, x, y, w, h, angle, glowColor) {
+            ctx.save();
+            ctx.translate(x, y);
+            ctx.rotate(angle);
+            
+            // Outer phone border shadow
+            ctx.shadowColor = 'rgba(0,0,0,0.6)';
+            ctx.shadowBlur = 15;
+
+            // Outer frame
+            ctx.beginPath();
+            if (typeof ctx.roundRect === 'function') {
+                ctx.roundRect(-w/2, -h/2, w, h, 12);
+            } else {
+                ctx.rect(-w/2, -h/2, w, h);
+            }
+            ctx.fillStyle = '#100d18';
+            ctx.strokeStyle = '#272033';
+            ctx.lineWidth = 3;
+            ctx.fill();
+            ctx.stroke();
+            ctx.shadowBlur = 0;
+            
+            // Active glass display
+            ctx.beginPath();
+            if (typeof ctx.roundRect === 'function') {
+                ctx.roundRect(-w/2 + 5, -h/2 + 8, w - 10, h - 16, 8);
+            } else {
+                ctx.rect(-w/2 + 5, -h/2 + 8, w - 10, h - 16);
+            }
+            ctx.fillStyle = '#030206';
+            ctx.strokeStyle = '#1b1626';
+            ctx.lineWidth = 1;
+            ctx.fill();
+            ctx.stroke();
+            
+            // Camera Notch
+            ctx.beginPath();
+            if (typeof ctx.roundRect === 'function') {
+                ctx.roundRect(-14, -h/2 + 8, 28, 6, 3);
+            } else {
+                ctx.rect(-14, -h/2 + 8, 28, 6);
+            }
+            ctx.fillStyle = '#1d1727';
+            ctx.fill();
+
+            // Bottom home indicator line
+            ctx.beginPath();
+            ctx.moveTo(-12, h/2 - 5);
+            ctx.lineTo(12, h/2 - 5);
+            ctx.strokeStyle = '#272033';
+            ctx.lineWidth = 2.5;
+            ctx.stroke();
+
+            // Screen graphics: active logs (glowing green line)
+            ctx.strokeStyle = glowColor ? glowColor : '#1b1626';
+            ctx.lineWidth = 1.5;
+            ctx.beginPath();
+            ctx.moveTo(-w/2 + 15, -h/2 + 30);
+            ctx.lineTo(w/2 - 15, -h/2 + 30);
+            ctx.stroke();
+
+            // Tiny grid graph inside phone screen
+            ctx.strokeStyle = glowColor ? 'rgba(52, 199, 89, 0.15)' : 'rgba(179, 134, 217, 0.03)';
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            for (let ly = -h/2 + 45; ly < h/2 - 20; ly += 12) {
+                ctx.moveTo(-w/2 + 12, ly);
+                ctx.lineTo(w/2 - 12, ly);
+            }
+            ctx.stroke();
+            
+            // Connection glow ring
+            if (glowColor) {
+                ctx.shadowColor = glowColor;
+                ctx.shadowBlur = 30;
+                ctx.strokeStyle = glowColor;
+                ctx.lineWidth = 2.5;
+                ctx.stroke();
+                ctx.shadowBlur = 0;
+            }
+            ctx.restore();
+        }
+
+        // Draw curved cables with flowing packets
+        function drawCurveCable(ctx, x1, y1, x2, y2, progress, color, time) {
+            let cp1x = x1 + (x2 - x1) * 0.2;
+            let cp1y = y1 + (y2 - y1) * 0.8;
+            let cp2x = x1 + (x2 - x1) * 0.8;
+            let cp2y = y1 + (y2 - y1) * 0.2;
+            
+            // Cable casing (underneath)
+            ctx.beginPath();
+            ctx.moveTo(x1, y1);
+            ctx.bezierCurveTo(cp1x, cp1y, cp2x, cp2y, x2, y2);
+            ctx.strokeStyle = 'rgba(141, 133, 163, 0.08)';
+            ctx.lineWidth = 4;
+            ctx.stroke();
+            
+            // Core copper fiber line
+            ctx.strokeStyle = 'rgba(179, 134, 217, 0.2)';
+            ctx.lineWidth = 1.5;
+            ctx.stroke();
+            
+            // Active glowing data line
+            if (progress > 0) {
+                ctx.beginPath();
+                ctx.moveTo(x1, y1);
+                
+                let steps = 60;
+                let limit = Math.floor(steps * progress);
+                for (let i = 0; i <= limit; i++) {
+                    let t = i / steps;
+                    let mt = 1 - t;
+                    let cx = mt*mt*mt*x1 + 3*mt*mt*t*cp1x + 3*mt*t*t*cp2x + t*t*t*x2;
+                    let cy = mt*mt*mt*y1 + 3*mt*mt*t*cp1y + 3*mt*t*t*cp2y + t*t*t*y2;
+                    ctx.lineTo(cx, cy);
+                }
+                ctx.strokeStyle = color;
+                ctx.lineWidth = 2;
+                ctx.shadowColor = color;
+                ctx.shadowBlur = 12;
+                ctx.stroke();
+                ctx.shadowBlur = 0;
+                
+                // Packets waves
+                for (let j = 0; j < 3; j++) {
+                    let offset = j * 0.33;
+                    let pulseT = ((time * 0.18) + offset) % 1.0;
+                    if (pulseT <= progress) {
+                        let mt = 1 - pulseT;
+                        let cx = mt*mt*mt*x1 + 3*mt*mt*pulseT*cp1x + 3*mt*pulseT*pulseT*cp2x + pulseT*pulseT*pulseT*x2;
+                        let cy = mt*mt*mt*y1 + 3*mt*mt*pulseT*cp1y + 3*mt*pulseT*pulseT*cp2y + pulseT*pulseT*pulseT*y2;
+                        
+                        ctx.beginPath();
+                        ctx.arc(cx, cy, 3.5, 0, Math.PI * 2);
+                        ctx.fillStyle = '#fff';
+                        ctx.shadowColor = color;
+                        ctx.shadowBlur = 15;
+                        ctx.fill();
+                        ctx.shadowBlur = 0;
+                    }
+                }
+            }
+        }
+
+        // Draw space particles
+        function drawParticles(ctx, time) {
+            for (let p of particles) {
+                p.y -= p.speed * 0.003;
+                if (p.y < 0) p.y = 1;
+                let px = p.x * canvas.width + Math.sin(time + p.angle) * 10;
+                let py = p.y * canvas.height;
+                ctx.beginPath();
+                ctx.arc(px, py, p.size, 0, Math.PI * 2);
+                ctx.fillStyle = p.color;
+                ctx.globalAlpha = 0.28;
+                ctx.fill();
+                ctx.globalAlpha = 1.0;
+            }
+        }
+
+        // Main animation loop
+        function animate() {
+            time += 0.02;
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // Scroll ratio
+            let progress = Math.min(1, window.scrollY / 400);
+            
+            let serverLeftX = canvas.width * 0.22;
+            let serverRightX = canvas.width * 0.78;
+            if (canvas.width < 768) {
+                serverLeftX = canvas.width * 0.12;
+                serverRightX = canvas.width * 0.88;
+            }
+            
+            // Floating keyframe offsets
+            let serverLeftY = 140 + Math.sin(time) * 15;
+            let serverRightY = 160 + Math.cos(time * 0.9) * 15;
+            
+            // 1. Draw space environment
+            drawParticles(ctx, time);
+            
+            // 2. Draw Left server module (glowing green/blue)
+            drawServerBlock(ctx, serverLeftX, serverLeftY, 35, 42, 55, 
+                            { left: '#051d11', right: '#0d281a', top: '#082215' }, 
+                            '#10b981', ['#34c759', '#007aff', '#34c759']);
+                            
+            // Draw Right server module (glowing red/blue)
+            drawServerBlock(ctx, serverRightX, serverRightY, 42, 35, 55, 
+                            { left: '#24060b', right: '#300d11', top: '#28090e' }, 
+                            '#ff3b30', ['#ff3b30', '#007aff', '#ff3b30']);
+            
+            // 3. Draw phone screen outline
+            let phoneX = canvas.width * 0.5;
+            let phoneY = canvas.height * 0.8 + Math.sin(time * 0.7) * 4;
+            
+            let isConnected = progress >= 0.96;
+            let glow = null;
+            if (isConnected) {
+                // Alternate active RGB neon glow
+                let colors = ['#34c759', '#ff3b30', '#007aff'];
+                glow = colors[Math.floor(time * 2.2) % 3];
+            }
+            drawPhone(ctx, phoneX, phoneY, 60, 105, Math.sin(time * 0.35) * 0.03, glow);
+            
+            // 4. Draw glowing data cables
+            // Left Server Cable to Left port
+            drawCurveCable(ctx, serverLeftX, serverLeftY + 28, phoneX - 12, phoneY + 18, progress, '#34c759', time);
+            
+            // Right Server Cable to Right port
+            drawCurveCable(ctx, serverRightX, serverRightY + 28, phoneX + 12, phoneY + 18, progress, '#ff3b30', time);
+            
+            requestAnimationFrame(animate);
+        }
+        
+        animate();
+    </script>
+</body>
+</html>
