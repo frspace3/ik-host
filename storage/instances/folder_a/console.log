@@ -1,0 +1,182 @@
+
+[2026-07-28 04:54:02] ✗ UNZIP FAILED: Not a valid ZIP file: test.py
+
+[2026-07-28 04:54:02] 🚀 Instance STARTED
+C:\Users\Imran kaiser LP\AppData\Local\Python\pythoncore-3.14-64\python.exe: can't open file 'C:\\Users\\Imran kaiser LP\\Documents\\my hosting\\storage\\instances\\folder_a\\main.py': [Errno 2] No such file or directory
+...
+[2026-07-28 04:54:02] ✓ Detected project type: FLASK
+[2026-07-28 04:54:02] 🔌 Allocating unique port...
+[2026-07-28 04:54:02] ✓ Assigned Port: 5002
+[2026-07-28 04:54:02] ✓ Public Route: http://localhost/instance/folder_a
+[2026-07-28 04:54:02] 📝 Detecting startup command...
+[2026-07-28 04:54:02] ✓ Startup Command: python sitecustomize.py
+[2026-07-28 04:54:02] ✅ Deployment pipeline completed successfully!
+
+[2026-07-28 14:16:32] ✗ UNZIP FAILED: Not a valid ZIP file: test.py
+
+[2026-07-28 14:16:32] 🚀 Instance STARTED
+C:\Users\Imran kaiser LP\AppData\Local\Python\pythoncore-3.14-64\python.exe: can't open file 'C:\\Users\\Imran kaiser LP\\Documents\\my hosting\\storage\\instances\\folder_a\\main.py': [Errno 2] No such file or directory
+...
+[2026-07-28 14:16:32] ✓ Detected project type: FLASK
+[2026-07-28 14:16:32] 🔌 Allocating unique port...
+[2026-07-28 14:16:32] ✓ Assigned Port: 5002
+[2026-07-28 14:16:32] ✓ Public Route: http://localhost/instance/folder_a
+[2026-07-28 14:16:32] 📝 Detecting startup command...
+[2026-07-28 14:16:32] ✓ Startup Command: python sitecustomize.py
+[2026-07-28 14:16:32] ✅ Deployment pipeline completed successfully!
+
+[2026-07-28 14:39:49] ✗ UNZIP FAILED: Not a valid ZIP file: test.py
+
+[2026-07-28 14:39:49] 🚀 Instance STARTED
+C:\Users\Imran kaiser LP\AppData\Local\Python\pythoncore-3.14-64\python.exe: can't open file 'C:\\Users\\Imran kaiser LP\\Documents\\my hosting\\storage\\instances\\folder_a\\main.py': [Errno 2] No such file or directory
+...
+[2026-07-28 14:39:49] ✓ Detected project type: FLASK
+[2026-07-28 14:39:49] 🔌 Allocating unique port...
+[2026-07-28 14:39:49] ✓ Assigned Port: 5002
+[2026-07-28 14:39:49] ✓ Public Route: http://localhost/instance/folder_a
+[2026-07-28 14:39:49] 📝 Detecting startup command...
+[2026-07-28 14:39:49] ✓ Startup Command: python sitecustomize.py
+[2026-07-28 14:39:49] ✅ Deployment pipeline completed successfully!
+
+[2026-07-28 15:36:22] ✗ UNZIP FAILED: Not a valid ZIP file: test.py
+
+[2026-07-28 15:36:22] 🚀 Instance STARTED
+C:\Users\Imran kaiser LP\AppData\Local\Python\pythoncore-3.14-64\python.exe: can't open file 'C:\\Users\\Imran kaiser LP\\Documents\\my hosting\\storage\\instances\\folder_a\\main.py': [Errno 2] No such file or directory
+...
+[2026-07-28 15:36:22] ✓ Detected project type: FLASK
+[2026-07-28 15:36:22] 🔌 Allocating unique port...
+[2026-07-28 15:36:22] ✓ Assigned Port: 5002
+[2026-07-28 15:36:22] ✓ Public Route: http://localhost/instance/folder_a
+[2026-07-28 15:36:22] 📝 Detecting startup command...
+[2026-07-28 15:36:22] ✓ Startup Command: python sitecustomize.py
+[2026-07-28 15:36:22] ✅ Deployment pipeline completed successfully!
+
+[2026-07-29 01:26:23] ✗ UNZIP FAILED: Not a valid ZIP file: test.py
+
+[2026-07-29 01:26:23] 🚀 Instance STARTED
+C:\Users\Imran kaiser LP\AppData\Local\Python\pythoncore-3.14-64\python.exe: can't open file 'C:\\Users\\Imran kaiser LP\\Documents\\my hosting\\storage\\instances\\folder_a\\main.py': [Errno 2] No such file or directory
+...
+[2026-07-29 01:26:23] ✓ Detected project type: FLASK
+[2026-07-29 01:26:23] 🔌 Allocating unique port...
+[2026-07-29 01:26:23] ✓ Assigned Port: 5002
+[2026-07-29 01:26:24] ✓ Public Route: http://localhost/instance/folder_a
+[2026-07-29 01:26:24] 📝 Detecting startup command...
+[2026-07-29 01:26:24] ✓ Startup Command: python sitecustomize.py
+[2026-07-29 01:26:24] ✅ Deployment pipeline completed successfully!
+
+[2026-07-29 01:39:35] ✗ UNZIP FAILED: Not a valid ZIP file: test.py
+
+[2026-07-29 01:39:35] 🚀 Instance STARTED
+C:\Users\Imran kaiser LP\AppData\Local\Python\pythoncore-3.14-64\python.exe: can't open file 'C:\\Users\\Imran kaiser LP\\Documents\\my hosting\\storage\\instances\\folder_a\\main.py': [Errno 2] No such file or directory
+...
+[2026-07-29 01:39:36] ✓ Detected project type: FLASK
+[2026-07-29 01:39:36] 🔌 Allocating unique port...
+[2026-07-29 01:39:36] ✓ Assigned Port: 5002
+[2026-07-29 01:39:36] ✓ Public Route: http://localhost/instance/folder_a
+[2026-07-29 01:39:36] 📝 Detecting startup command...
+[2026-07-29 01:39:36] ✓ Startup Command: python sitecustomize.py
+[2026-07-29 01:39:36] ✅ Deployment pipeline completed successfully!
+
+[2026-07-29 01:55:05] ✗ UNZIP FAILED: Not a valid ZIP file: test.py
+
+[2026-07-29 01:55:05] 🚀 Instance STARTED
+C:\Users\Imran kaiser LP\AppData\Local\Python\pythoncore-3.14-64\python.exe: can't open file 'C:\\Users\\Imran kaiser LP\\Documents\\my hosting\\storage\\instances\\folder_a\\main.py': [Errno 2] No such file or directory
+...
+[2026-07-29 01:55:05] ✓ Detected project type: FLASK
+[2026-07-29 01:55:05] 🔌 Allocating unique port...
+[2026-07-29 01:55:05] ✓ Assigned Port: 5002
+[2026-07-29 01:55:05] ✓ Public Route: http://localhost/instance/folder_a
+[2026-07-29 01:55:05] 📝 Detecting startup command...
+[2026-07-29 01:55:05] ✓ Startup Command: python sitecustomize.py
+[2026-07-29 01:55:06] ✅ Deployment pipeline completed successfully!
+
+[2026-07-29 04:16:32] ✗ UNZIP FAILED: Not a valid ZIP file: test.py
+
+[2026-07-29 04:16:32] 🚀 Instance STARTED
+C:\Users\Imran kaiser LP\AppData\Local\Python\pythoncore-3.14-64\python.exe: can't open file 'C:\\Users\\Imran kaiser LP\\Documents\\my hosting\\storage\\instances\\folder_a\\main.py': [Errno 2] No such file or directory
+...
+[2026-07-29 04:16:32] ✓ Detected project type: FLASK
+[2026-07-29 04:16:32] 🔌 Allocating unique port...
+[2026-07-29 04:16:32] ✓ Assigned Port: 5002
+[2026-07-29 04:16:32] ✓ Public Route: http://localhost/instance/folder_a
+[2026-07-29 04:16:32] 📝 Detecting startup command...
+[2026-07-29 04:16:32] ✓ Startup Command: python sitecustomize.py
+[2026-07-29 04:16:32] ✅ Deployment pipeline completed successfully!
+
+[2026-07-29 04:23:27] ✗ UNZIP FAILED: Not a valid ZIP file: test.py
+
+[2026-07-29 04:23:27] 🚀 Instance STARTED
+C:\Users\Imran kaiser LP\AppData\Local\Python\pythoncore-3.14-64\python.exe: can't open file 'C:\\Users\\Imran kaiser LP\\Documents\\my hosting\\storage\\instances\\folder_a\\main.py': [Errno 2] No such file or directory
+...
+[2026-07-29 04:23:27] ✓ Detected project type: FLASK
+[2026-07-29 04:23:27] 🔌 Allocating unique port...
+[2026-07-29 04:23:27] ✓ Assigned Port: 5002
+[2026-07-29 04:23:27] ✓ Public Route: http://localhost/instance/folder_a
+[2026-07-29 04:23:27] 📝 Detecting startup command...
+[2026-07-29 04:23:27] ✓ Startup Command: python sitecustomize.py
+[2026-07-29 04:23:27] ✅ Deployment pipeline completed successfully!
+
+[2026-07-29 04:24:44] ✗ UNZIP FAILED: Not a valid ZIP file: test.py
+
+[2026-07-29 04:24:44] 🚀 Instance STARTED
+C:\Users\Imran kaiser LP\AppData\Local\Python\pythoncore-3.14-64\python.exe: can't open file 'C:\\Users\\Imran kaiser LP\\Documents\\my hosting\\storage\\instances\\folder_a\\main.py': [Errno 2] No such file or directory
+...
+[2026-07-29 04:24:44] ✓ Detected project type: FLASK
+[2026-07-29 04:24:44] 🔌 Allocating unique port...
+[2026-07-29 04:24:44] ✓ Assigned Port: 5002
+[2026-07-29 04:24:44] ✓ Public Route: http://localhost/instance/folder_a
+[2026-07-29 04:24:44] 📝 Detecting startup command...
+[2026-07-29 04:24:44] ✓ Startup Command: python sitecustomize.py
+[2026-07-29 04:24:44] ✅ Deployment pipeline completed successfully!
+
+[2026-07-29 04:27:25] ✗ UNZIP FAILED: Not a valid ZIP file: test.py
+
+[2026-07-29 04:27:25] 🚀 Instance STARTED
+C:\Users\Imran kaiser LP\AppData\Local\Python\pythoncore-3.14-64\python.exe: can't open file 'C:\\Users\\Imran kaiser LP\\Documents\\my hosting\\storage\\instances\\folder_a\\main.py': [Errno 2] No such file or directory
+...
+[2026-07-29 04:27:25] ✓ Detected project type: FLASK
+[2026-07-29 04:27:25] 🔌 Allocating unique port...
+[2026-07-29 04:27:25] ✓ Assigned Port: 5002
+[2026-07-29 04:27:25] ✓ Public Route: http://localhost/instance/folder_a
+[2026-07-29 04:27:25] 📝 Detecting startup command...
+[2026-07-29 04:27:25] ✓ Startup Command: python sitecustomize.py
+[2026-07-29 04:27:25] ✅ Deployment pipeline completed successfully!
+
+[2026-07-29 04:38:49] ✗ UNZIP FAILED: Not a valid ZIP file: test.py
+
+[2026-07-29 04:38:49] 🚀 Instance STARTED
+C:\Users\Imran kaiser LP\AppData\Local\Python\pythoncore-3.14-64\python.exe: can't open file 'C:\\Users\\Imran kaiser LP\\Documents\\my hosting\\storage\\instances\\folder_a\\main.py': [Errno 2] No such file or directory
+...
+[2026-07-29 04:38:49] ✓ Detected project type: FLASK
+[2026-07-29 04:38:49] 🔌 Allocating unique port...
+[2026-07-29 04:38:49] ✓ Assigned Port: 5002
+[2026-07-29 04:38:49] ✓ Public Route: http://localhost/instance/folder_a
+[2026-07-29 04:38:49] 📝 Detecting startup command...
+[2026-07-29 04:38:49] ✓ Startup Command: python sitecustomize.py
+[2026-07-29 04:38:49] ✅ Deployment pipeline completed successfully!
+
+[2026-07-29 04:54:35] ✗ UNZIP FAILED: Not a valid ZIP file: test.py
+
+[2026-07-29 04:54:35] 🚀 Instance STARTED
+C:\Users\Imran kaiser LP\AppData\Local\Python\pythoncore-3.14-64\python.exe: can't open file 'C:\\Users\\Imran kaiser LP\\Documents\\my hosting\\storage\\instances\\folder_a\\main.py': [Errno 2] No such file or directory
+...
+[2026-07-29 04:54:35] ✓ Detected project type: FLASK
+[2026-07-29 04:54:35] 🔌 Allocating unique port...
+[2026-07-29 04:54:35] ✓ Assigned Port: 5002
+[2026-07-29 04:54:35] ✓ Public Route: http://localhost/instance/folder_a
+[2026-07-29 04:54:35] 📝 Detecting startup command...
+[2026-07-29 04:54:35] ✓ Startup Command: python sitecustomize.py
+[2026-07-29 04:54:35] ✅ Deployment pipeline completed successfully!
+
+[2026-07-29 13:38:49] ✗ UNZIP FAILED: Not a valid ZIP file: test.py
+
+[2026-07-29 13:38:49] 🚀 Instance STARTED
+C:\Users\Imran kaiser LP\AppData\Local\Python\pythoncore-3.14-64\python.exe: can't open file 'C:\\Users\\Imran kaiser LP\\Documents\\my hosting\\storage\\instances\\folder_a\\main.py': [Errno 2] No such file or directory
+...
+[2026-07-29 13:38:49] ✓ Detected project type: FLASK
+[2026-07-29 13:38:49] 🔌 Allocating unique port...
+[2026-07-29 13:38:49] ✓ Assigned Port: 5002
+[2026-07-29 13:38:49] ✓ Public Route: http://localhost/instance/folder_a
+[2026-07-29 13:38:49] 📝 Detecting startup command...
+[2026-07-29 13:38:49] ✓ Startup Command: python sitecustomize.py
+[2026-07-29 13:38:49] ✅ Deployment pipeline completed successfully!
