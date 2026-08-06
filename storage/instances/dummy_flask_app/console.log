@@ -32,3 +32,48 @@ Press CTRL+C to quit
 127.0.0.1 - - [06/Aug/2026 19:18:03] "GET / HTTP/1.1" 200 -
 127.0.0.1 - - [06/Aug/2026 19:18:29] "GET /exploit-file HTTP/1.1" 404 -
 127.0.0.1 - - [06/Aug/2026 19:18:29] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [06/Aug/2026 20:08:25] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [06/Aug/2026 20:08:54] "GET /exploit-file HTTP/1.1" 404 -
+127.0.0.1 - - [06/Aug/2026 20:08:54] "GET / HTTP/1.1" 200 -
+ject files...
+[2026-08-06 20:08:18] ✓ Detected project type: FLASK
+[2026-08-06 20:08:18] 🔌 Allocating unique port...
+[2026-08-06 20:08:18] ✓ Assigned Port: 5002
+[2026-08-06 20:08:18] ✓ Public Route: http://localhost:5000/instance/dummy_flask_app
+[2026-08-06 20:08:18] 📝 Detecting startup command...
+[2026-08-06 20:08:18] ✓ Startup Command: python app.py
+[2026-08-06 20:08:18] 📦 Installing Python packages (pip install)...
+[2026-08-06 20:08:20] ✓ pip install finished.
+[2026-08-06 20:08:20] pip logs:
+site-packages (from flask->-r requirements.txt (line 1)) (2.2.0)
+Requirement already satisfied: jinja2>=3.1.2 in C:\Users\Imran kaiser LP\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages (from flask->-r requirements.txt (line 1)) (3.1.6)
+Requirement already satisfied: markupsafe>=2.1.1 in C:\Users\Imran kaiser LP\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages (from flask->-r requirements.txt (line 1)) (3.0.3)
+Requirement already satisfied: werkzeug>=3.1.0 in C:\Users\Imran kaiser LP\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages (from flask->-r requirements.txt (line 1)) (3.1.8)
+Requirement already satisfied: colorama in C:\Users\Imran kaiser LP\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages (from click>=8.1.3->flask->-r requirements.txt (line 1)) (0.4.6)
+
+[notice] A new release of pip is available: 26.1.1 -> 26.2.1
+[notice] To update, run: C:\Users\Imran kaiser LP\AppData\Local\Python\pythoncore-3.14-64\python.exe -m pip install --upgrade pip
+
+[2026-08-06 20:08:20] ✅ Deployment pipeline completed successfully!
+
+[2026-08-06 20:08:20] 🚀 Instance STARTED
+[2026-08-06 20:08:20] 📦 Auto-checking requirements.txt dependencies...
+Requirement already satisfied: flask in C:\Users\Imran kaiser LP\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages (from -r requirements.txt (line 1)) (3.1.3)
+Requirement already satisfied: blinker>=1.9.0 in C:\Users\Imran kaiser LP\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages (from flask->-r requirements.txt (line 1)) (1.9.0)
+Requirement already satisfied: click>=8.1.3 in C:\Users\Imran kaiser LP\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages (from flask->-r requirements.txt (line 1)) (8.1.8)
+Requirement already satisfied: itsdangerous>=2.2.0 in C:\Users\Imran kaiser LP\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages (from flask->-r requirements.txt (line 1)) (2.2.0)
+Requirement already satisfied: jinja2>=3.1.2 in C:\Users\Imran kaiser LP\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages (from flask->-r requirements.txt (line 1)) (3.1.6)
+Requirement already satisfied: markupsafe>=2.1.1 in C:\Users\Imran kaiser LP\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages (from flask->-r requirements.txt (line 1)) (3.0.3)
+Requirement already satisfied: werkzeug>=3.1.0 in C:\Users\Imran kaiser LP\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages (from flask->-r requirements.txt (line 1)) (3.1.8)
+Requirement already satisfied: colorama in C:\Users\Imran kaiser LP\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages (from click>=8.1.3->flask->-r requirements.txt (line 1)) (0.4.6)
+
+[notice] A new release of pip is available: 26.1.1 -> 26.2.1
+[notice] To update, run: C:\Users\Imran kaiser LP\AppData\Local\Python\pythoncore-3.14-64\python.exe -m pip install --upgrade pip
+[2026-08-06 20:08:20] ✓ Dependencies check complete.
+ * Serving Flask app 'app'
+ * Debug mode: off
+WARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:5002
+ * Running on http://192.168.0.233:5002
+Press CTRL+C to quit
