@@ -117,6 +117,19 @@ def init_db():
         )
         print('[i] Updated owner profile (imran / 554961) with max limits.')
 
+    # -- 6. Cleanup Orphan & Stale Server Records --
+    cursor.execute("DELETE FROM servers WHERE user_id NOT IN (SELECT id FROM users)")
+    instances_dir = os.path.join(DB_DIR, 'instances')
+    all_servers = cursor.execute("SELECT id, folder FROM servers").fetchall()
+    stale_count = 0
+    for srv in all_servers:
+        folder_path = os.path.join(instances_dir, srv['folder'])
+        if not os.path.exists(folder_path):
+            cursor.execute("DELETE FROM servers WHERE id = ?", (srv['id'],))
+            stale_count += 1
+    if stale_count > 0:
+        print(f"[i] Cleaned up {stale_count} stale/orphan instance database entries.")
+
     db.commit()
     db.close()
 
