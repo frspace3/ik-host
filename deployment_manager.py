@@ -239,9 +239,11 @@ except Exception:
                 finally:
                     conn_name.close()
 
+                h_name = telegram_monitor.get_hosting_name()
                 msg_text = (
                     f"🚀 *INSTANCE DEPLOYED & READY*\n"
                     f"----------------------------------\n"
+                    f"🌐 *Hosting Server:* `{h_name}`\n"
                     f"📦 *Name:* `{srv_name}` (`{folder}`)\n"
                     f"🛠️ *Type:* `{p_type.upper()}`\n"
                     f"🔌 *Assigned Port:* `{port or 'N/A'}`\n"
