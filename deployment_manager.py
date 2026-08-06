@@ -121,28 +121,20 @@ def run_deployment_pipeline(folder, request_host):
             except Exception as ex:
                 log(f"⚠ npm install error: {str(ex)}")
         else:
-            req_path = os.path.join(path, 'requirements.txt')
-            if os.path.isfile(req_path):
-                log("📦 Installing Python packages (pip install)...")
+            log("📦 Installing Python packages (pip install)...")
+            try:
+                conn = sqlite3.connect(DB_PATH, timeout=30.0, check_same_thread=False)
                 try:
-                    conn = sqlite3.connect(DB_PATH, timeout=30.0, check_same_thread=False)
-                    try:
+                    conn.execute('UPDATE servers SET status = "Installing" WHERE folder = ?', (folder,))
+                    conn.commit()
+                finally:
+                    conn.close()
 
-                        conn.execute('UPDATE servers SET status = "Installing" WHERE folder = ?', (folder,))
-                        conn.commit()
-                    finally:
-                        conn.close()
-                    import sys
-                    result = subprocess.run(
-                        [sys.executable, '-m', 'pip', 'install', '-r', 'requirements.txt'], cwd=path,
-                        stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
-                        text=True, timeout=180
-                    )
-                    log("✓ pip install finished.")
-                    if result.stdout:
-                        log(f"pip logs:\n{result.stdout[-1000:]}")
-                except Exception as ex:
-                    log(f"⚠ pip install error: {str(ex)}")
+                from helpers import install_instance_requirements
+                install_instance_requirements(path)
+                log("✓ pip install check finished.")
+            except Exception as ex:
+                log(f"⚠ pip install error: {str(ex)}")
 
         # Create sitecustomize.py to automatically force the assigned port for Flask/FastAPI/Uvicorn/etc.
         if port:
