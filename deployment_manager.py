@@ -8,43 +8,11 @@ import port_manager
 import project_detector
 import startup_detector
 import proxy_manager
+from helpers import is_safe_path, flatten_extracted_folder
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DB_PATH = os.path.join(BASE_DIR, 'storage/ikhost.db')
 BASE_STORAGE = os.path.join(BASE_DIR, 'storage/instances')
-
-def is_safe_path(base_dir, path):
-    base_dir = os.path.abspath(base_dir)
-    path = os.path.abspath(path)
-    try:
-        common = os.path.commonpath([base_dir, path])
-        return os.path.normcase(common) == os.path.normcase(base_dir)
-    except ValueError:
-        return False
-
-def flatten_extracted_folder(extracted_path):
-    import shutil
-    try:
-        items = os.listdir(extracted_path)
-        items = [i for i in items if i != '__MACOSX']
-        if len(items) == 1:
-            single_dir = os.path.join(extracted_path, items[0])
-            if os.path.isdir(single_dir):
-                for sub_item in os.listdir(single_dir):
-                    src = os.path.join(single_dir, sub_item)
-                    dst = os.path.join(extracted_path, sub_item)
-                    if os.path.exists(dst):
-                        if os.path.isdir(dst):
-                            shutil.rmtree(dst)
-                        else:
-                            os.remove(dst)
-                    shutil.move(src, dst)
-                try:
-                    os.rmdir(single_dir)
-                except:
-                    pass
-    except Exception as e:
-        print(f"Error flattening folder: {e}")
 
 def run_deployment_pipeline(folder, request_host):
     """Executes the complete one-click deployment pipeline for an instance."""
