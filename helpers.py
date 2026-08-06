@@ -369,9 +369,22 @@ except Exception:
     if assigned_port:
         cmd_run = cmd_run.replace('$PORT', str(assigned_port)).replace('%PORT%', str(assigned_port))
 
-    if cmd_run.endswith('.py') and not (cmd_run.startswith('python') or cmd_run.startswith('python3')):
-        python_cmd = 'python' if os.name == 'nt' else 'python3'
-        cmd_run = f"{python_cmd} {cmd_run}"
+    # Auto-install requirements.txt if present inside instance directory
+    req_file = os.path.join(path, 'requirements.txt')
+    if os.path.isfile(req_file):
+        try:
+            flog.write(f"[{now}] 📦 Auto-checking requirements.txt dependencies...\n")
+            flog.flush()
+            python_exec = sys.executable or 'python'
+            subprocess.run(
+                [python_exec, '-m', 'pip', 'install', '-r', 'requirements.txt'],
+                cwd=path, stdout=flog, stderr=flog, timeout=120
+            )
+            flog.write(f"[{now}] ✓ Dependencies check complete.\n")
+            flog.flush()
+        except Exception as ex_req:
+            flog.write(f"[{now}] ⚠ Requirements auto-install warning: {ex_req}\n")
+            flog.flush()
 
     popen_kwargs = {'cwd': path, 'stdout': flog, 'stderr': flog, 'stdin': subprocess.PIPE, 'env': env, 'shell': True}
     if os.name != 'nt':
