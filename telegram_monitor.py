@@ -20,7 +20,7 @@ sched_lock = threading.Lock()
 stop_event = threading.Event()
 _config_cache = None
 _config_cache_time = 0
-_CONFIG_CACHE_TTL = 60  # seconds
+_CONFIG_CACHE_TTL = 300  # seconds (5 minutes)
 
 def register_restart_callback(cb):
     """Registers the server action callback from app.py to trigger restarts."""
@@ -527,7 +527,7 @@ def get_time_hour_minute(t_str):
 
 def scheduler_loop():
     global last_report_date, last_backup_date, last_warning_date
-    while True:
+    while not stop_event.is_set():
         try:
             config = read_config()
             owner_id = config['owner_id']
@@ -576,7 +576,7 @@ def scheduler_loop():
         except Exception as e:
             print(f"[TelegramMonitor] Error in scheduler loop: {e}")
             
-        stop_event.wait(30)
+        stop_event.wait(60)
 
 def start_bot_polling():
     global bot
@@ -602,7 +602,7 @@ def start_bot_polling():
                 pass
                 
             print("[TelegramMonitor] Starting Telegram Bot polling loop...")
-            local_bot.infinity_polling(timeout=15, long_polling_timeout=5, skip_pending=True)
+            local_bot.infinity_polling(timeout=30, long_polling_timeout=25, skip_pending=True)
         except telebot.apihelper.ApiTelegramException as e:
             if getattr(e, 'error_code', None) == 409:
                 print("[TelegramMonitor] ⚠️ Telegram Bot 409 Conflict: Another bot instance is currently running. Retrying in 10s...")
