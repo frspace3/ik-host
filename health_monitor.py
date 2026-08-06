@@ -17,6 +17,10 @@ active_restarts_lock = threading.Lock()
 process_cache = {}
 process_cache_lock = threading.Lock()
 
+# Cached metrics from last health check cycle (shared with API routes)
+metrics_cache = {}  # {folder: {'cpu': '0%', 'ram': '0MB', 'ram_mb': 0.0, 'online': False, 'health': 'Unknown'}}
+metrics_cache_lock = threading.Lock()
+
 def register_restart_callback(cb):
     """Registers the server action callback from app.py to trigger restarts."""
     global restart_callback
@@ -55,7 +59,6 @@ def run_health_checks():
         conn = None
         try:
             conn = sqlite3.connect(DB_PATH, timeout=30.0, check_same_thread=False)
-            conn.execute("PRAGMA journal_mode=WAL")
             conn.row_factory = sqlite3.Row
             cursor = conn.cursor()
             
@@ -150,36 +153,37 @@ def run_health_checks():
                             except (psutil.NoSuchProcess, psutil.AccessDenied):
                                 children = []
                             
-                            # Detect actual listening port
-                            detected_port = None
-                            try:
-                                processes = [p] + children
-                                for proc in processes:
-                                    conns = []
-                                    try:
-                                        conns = proc.connections(kind='inet')
-                                    except:
+                            # Detect actual listening port (skip if already known to save CPU)
+                            if not port:
+                                detected_port = None
+                                try:
+                                    processes = [p] + children
+                                    for proc in processes:
+                                        conns = []
                                         try:
-                                            conns = proc.connections()
+                                            conns = proc.connections(kind='inet')
                                         except:
-                                            pass
-                                    for c in conns:
-                                        is_listen = False
-                                        if hasattr(c, 'status'):
-                                            status_str = str(c.status).lower()
-                                            if 'listen' in status_str:
-                                                is_listen = True
-                                        if is_listen and hasattr(c, 'laddr') and hasattr(c.laddr, 'port'):
-                                            detected_port = c.laddr.port
+                                            try:
+                                                conns = proc.connections()
+                                            except:
+                                                pass
+                                        for c in conns:
+                                            is_listen = False
+                                            if hasattr(c, 'status'):
+                                                status_str = str(c.status).lower()
+                                                if 'listen' in status_str:
+                                                    is_listen = True
+                                            if is_listen and hasattr(c, 'laddr') and hasattr(c.laddr, 'port'):
+                                                detected_port = c.laddr.port
+                                                break
+                                        if detected_port:
                                             break
-                                    if detected_port:
-                                        break
-                            except:
-                                pass
-                                
-                            if detected_port and detected_port != port:
-                                cursor.execute('UPDATE servers SET assigned_port = ? WHERE folder = ?', (detected_port, folder))
-                                port = detected_port
+                                except:
+                                    pass
+                                    
+                                if detected_port and detected_port != port:
+                                    cursor.execute('UPDATE servers SET assigned_port = ? WHERE folder = ?', (detected_port, folder))
+                                    port = detected_port
 
                             # Enforce RAM and CPU resource limits (admin is unlimited)
                             try:
@@ -254,6 +258,25 @@ def run_health_checks():
                     'UPDATE servers SET health_status = ?, last_health_check = ? WHERE folder = ?',
                     (health, now_str, folder)
                 )
+
+                # Update shared metrics cache for API use
+                cached_cpu = '0%'
+                cached_ram = '0MB'
+                cached_ram_mb = 0.0
+                if online and pid:
+                    try:
+                        from helpers import get_process_resources
+                        cached_cpu, cached_ram, cached_ram_mb = get_process_resources(pid)
+                    except Exception:
+                        pass
+                with metrics_cache_lock:
+                    metrics_cache[folder] = {
+                        'cpu': cached_cpu,
+                        'ram': cached_ram,
+                        'ram_mb': cached_ram_mb,
+                        'online': online,
+                        'health': health
+                    }
 
                 # 4. Handle crash auto-restart
                 if status == 'Running' and not online:
@@ -331,7 +354,7 @@ def run_health_checks():
                 except:
                     pass
             
-        stop_event.wait(30)
+        stop_event.wait(60)
 
 def start_health_monitor():
     """Starts the health check loop inside a background daemon thread."""
