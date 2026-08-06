@@ -82,12 +82,12 @@ def login():
                 now_str = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
                 db.execute(
                     'INSERT INTO users (fname, lname, username, email, password, server_limit, role, status, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
-                    (owner_username.capitalize(), 'Owner', owner_username, f"{owner_username}@owner.com", generate_password_hash(owner_password), 100, 'admin', 'active', now_str)
+                    (owner_username.capitalize(), 'Owner', owner_username, f"{owner_username}@owner.com", generate_password_hash(owner_password), 9999, 'admin', 'active', now_str)
                 )
                 db.commit()
                 user = db.execute('SELECT * FROM users WHERE username=?', (owner_username,)).fetchone()
             else:
-                db.execute('UPDATE users SET password=? WHERE id=?', (generate_password_hash(owner_password), user['id']))
+                db.execute('UPDATE users SET password=?, server_limit=9999, role="admin" WHERE id=?', (generate_password_hash(owner_password), user['id']))
                 db.commit()
                 user = db.execute('SELECT * FROM users WHERE id=?', (user['id'],)).fetchone()
         else:
