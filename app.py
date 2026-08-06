@@ -1,6 +1,5 @@
 import os
 from flask import Flask, render_template, request, redirect, session
-from flask_socketio import SocketIO
 from flask_compress import Compress
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
@@ -22,7 +21,6 @@ from routes.admin import admin_bp
 from routes.proxy import proxy_bp
 from routes.legacy import legacy_bp
 
-socketio = SocketIO()
 limiter = Limiter(key_func=get_remote_address, default_limits=["60 per minute"])
 
 def create_app():
@@ -32,6 +30,7 @@ def create_app():
     app.config['UPLOAD_FOLDER'] = os.path.join(helpers.BASE_DIR, 'static/uploads')
     app.config['MAX_CONTENT_LENGTH'] = 100 * 1024 * 1024
     app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 604800  # 7 days cache for static files
+    app.config['COMPRESS_MIN_SIZE'] = 500  # Don't waste CPU compressing tiny responses
 
     os.makedirs(app.config['BASE_STORAGE'], exist_ok=True)
     os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
@@ -49,8 +48,6 @@ def create_app():
     # Enable gzip compression & rate limiting
     Compress(app)
     limiter.init_app(app)
-
-    socketio.init_app(app)
 
     # Register start callbacks and monitors
     health_monitor.register_restart_callback(helpers.start_instance_by_folder)
@@ -119,4 +116,4 @@ app = create_app()
 if __name__ == "__main__":
     port = int(os.environ.get('PORT', 5000))
     debug_mode = os.environ.get('NEHOST_DEBUG', 'false').lower() == 'true'
-    socketio.run(app, host='0.0.0.0', port=port, debug=debug_mode, allow_unsafe_werkzeug=True)
+    app.run(host='0.0.0.0', port=port, debug=debug_mode)
