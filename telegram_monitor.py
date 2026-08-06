@@ -491,29 +491,20 @@ def register_handlers():
     @bot.message_handler(commands=['help'])
     def handle_help(message):
         if not check_owner(message): return
-        h_name = get_hosting_name()
         help_text = (
-            f"🤖 *IK HOST MONITOR BOT — COMMAND MENU*\n"
-            f"🌐 *Server:* `{h_name}`\n"
-            f"━━━━━━━━━━━━━━━━━━━━━\n"
-            f"📊 *REPORTS & MONITORING*\n"
-            f"• `/report` — Get hosting status report\n"
-            f"• `/report 06:30 AM` — Set daily report time\n"
-            f"• `/status` — Show system & backup status\n"
-            f"• `/hosts` — Show server info & URL\n\n"
-            f"📦 *BACKUP COMMANDS*\n"
-            f"• `/backup` — Instant backup all instances\n"
-            f"• `/backup 3` — Set auto-backup interval (days)\n"
-            f"• `/backup_on` — Turn ON automated backups\n"
-            f"• `/backup_off` — Turn OFF automated backups\n\n"
-            f"🔄 *INSTANCE CONTROL*\n"
-            f"• `/restart all intance` — Restart all instances\n"
-            f"• `/stop all` — Stop all instances\n\n"
-            f"⚙️ *SETTINGS*\n"
-            f"• `/dayleft 20` — Set remaining trial days\n"
-            f"• `/dely 60` — Set ZIP backup delay (seconds)\n"
-            f"• `/help` — Display this help menu\n"
-            f"━━━━━━━━━━━━━━━━━━━━━"
+            "🤖 *IK Host Monitor Bot Help*\n\n"
+            "Commands:\n"
+            "• `/report` - Send hosting status report immediately\n"
+            "• `/report <time>` - Set daily report time BDT (e.g. `/report 06:30 AM` or `/report 18:30`)\n"
+            "• `/status` - Show system & auto-backup status\n"
+            "• `/backup` - Instant zip backup all instances\n"
+            "• `/backup_on` - Turn ON automated backups\n"
+            "• `/backup_off` - Turn OFF automated backups\n"
+            "• `/restart all intance` - Restart all hosting instances\n"
+            "• `/stop all` - Stop all hosting instances\n"
+            "• `/dely <seconds>` - Change ZIP backup delay (e.g. `/dely 60`)\n"
+            "• `/dayleft <days>` - Set trial remaining days (e.g. `/dayleft 20`)\n"
+            "• `/help` - Show this help menu"
         )
         bot.reply_to(message, help_text, parse_mode='Markdown')
 
