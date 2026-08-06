@@ -1,8 +1,16 @@
-import requests
-from flask import Blueprint, request, render_template
+import urllib3
+from flask import Blueprint, request, render_template, Response
 from helpers import get_db, is_hacked
 
 proxy_bp = Blueprint('proxy_bp', __name__)
+
+# Shared connection pool — reuses TCP connections across requests
+_http_pool = urllib3.PoolManager(
+    num_pools=20,
+    maxsize=10,
+    retries=False,
+    timeout=urllib3.Timeout(connect=5.0, read=20.0)
+)
 
 @proxy_bp.route('/instance/<folder>', defaults={'path': ''}, methods=['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'])
 @proxy_bp.route('/instance/<folder>/<path:path>', methods=['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'])
@@ -31,18 +39,26 @@ def proxy_instance_traffic(folder, path):
         target_url += f"?{request.query_string.decode('utf-8')}"
         
     try:
-        headers = {key: value for key, value in request.headers if key.lower() not in ['host', 'content-length']}
-        resp = requests.request(
+        headers = {key: value for key, value in request.headers if key.lower() not in ['host', 'content-length', 'transfer-encoding']}
+        resp = _http_pool.request(
             method=request.method,
             url=target_url,
             headers=headers,
-            data=request.get_data(),
-            cookies=request.cookies,
-            allow_redirects=False,
-            timeout=20
+            body=request.get_data(),
+            redirect=False,
+            preload_content=False  # Stream response instead of buffering
         )
-        excluded_headers = ['content-encoding', 'content-length', 'transfer-encoding', 'connection']
-        resp_headers = [(name, value) for name, value in resp.raw.headers.items() if name.lower() not in excluded_headers]
-        return (resp.content, resp.status_code, resp_headers)
+        excluded_headers = {'content-encoding', 'content-length', 'transfer-encoding', 'connection'}
+        resp_headers = [(name, value) for name, value in resp.headers.items() if name.lower() not in excluded_headers]
+        
+        # Stream the response to avoid loading entire body into RAM
+        def generate():
+            try:
+                for chunk in resp.stream(4096):
+                    yield chunk
+            finally:
+                resp.release_conn()
+        
+        return Response(generate(), status=resp.status, headers=resp_headers)
     except Exception as e:
         return f"Reverse Proxy connection error: {str(e)}", 502
