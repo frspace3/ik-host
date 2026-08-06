@@ -44,6 +44,9 @@ def read_config():
         'zip_delay': 60,
         'hosting_name': '',
         'panel_url': '',
+        'auto_backup': 'on',
+        'backup_interval_days': 3,
+        'last_auto_backup_date': '',
         'owner_username': 'imran',
         'owner_password': '',
         'admin_username': 'imran112233',
@@ -68,6 +71,15 @@ def read_config():
                             config['hosting_name'] = val
                         elif key in ('panel url', 'panel_url', 'hosting url', 'hosting_url'):
                             config['panel_url'] = val
+                        elif key in ('auto backup', 'auto_backup', 'autobackup'):
+                            config['auto_backup'] = 'on' if val.lower() in ('on', '1', 'true', 'yes', 'enable', 'enabled') else 'off'
+                        elif key in ('backup interval', 'backup_interval_days', 'backup_days', 'interval_days'):
+                            try:
+                                config['backup_interval_days'] = max(1, int(val))
+                            except:
+                                pass
+                        elif key in ('last auto backup', 'last_auto_backup_date', 'last_backup_date'):
+                            config['last_auto_backup_date'] = val
                         elif key == 'zip_delay' or key == 'delay' or key == 'dely':
                             try:
                                 config['zip_delay'] = int(val)
@@ -114,6 +126,9 @@ def write_config(config):
             f.write(f"zip_delay = {config.get('zip_delay', 60)}\n")
             f.write(f"hosting name = {config.get('hosting_name', '')}\n")
             f.write(f"panel url = {config.get('panel_url', '')}\n")
+            f.write(f"auto_backup = {config.get('auto_backup', 'on')}\n")
+            f.write(f"backup_interval_days = {config.get('backup_interval_days', 3)}\n")
+            f.write(f"last_auto_backup_date = {config.get('last_auto_backup_date', '')}\n")
             f.write(f"user = {config.get('owner_username', 'imran')}\n")
             f.write(f"password = {config.get('owner_password', '')}\n\n")
             f.write(f"#Admin Panel Credentials\n")
@@ -397,12 +412,20 @@ def notify_hacking_attempt(username, password_hash, instance_name, folder):
                     except: pass
 
 def send_all_instance_backups(chat_id):
+    config = read_config()
+    token = config.get('bot_token')
+    if not token or token == 'YOUR_TELEGRAM_BOT_TOKEN': return
+
     with bot_lock:
         local_bot = bot
-    if not local_bot: return
+
+    if not local_bot:
+        try:
+            local_bot = telebot.TeleBot(token)
+        except Exception:
+            return
     
-    config = read_config()
-    delay = config['zip_delay']
+    delay = config.get('zip_delay', 60)
     h_name = get_hosting_name()
     
     conn = get_db_conn()
@@ -411,9 +434,17 @@ def send_all_instance_backups(chat_id):
     finally:
         conn.close()
     
+    if not servers:
+        send_telegram_msg(chat_id, f"ℹ️ [{h_name}] No instances found to backup.")
+        return
+
     bdt_now = datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(hours=6)
     date_suffix = bdt_now.strftime('%d-%m-%Y')
     
+    send_telegram_msg(chat_id, f"📦 *STARTING INSTANCE BACKUPS ({len(servers)} total)...*\n🌐 Server: `{h_name}`\n⏱️ Transfer Delay: `{delay}s` per file")
+
+    total_sent = 0
+    import tempfile
     for s in servers:
         folder = s['folder']
         srv_name = s['name']
@@ -422,11 +453,9 @@ def send_all_instance_backups(chat_id):
         if not os.path.exists(instance_path):
             continue
             
-        import tempfile
         temp_dir = tempfile.gettempdir()
-        
         safe_name = re.sub(r'[\\/*?:"<>|]', '_', srv_name).strip()
-        zip_filename = f"{safe_name} ik host {date_suffix}.zip"
+        zip_filename = f"{safe_name} intance backup {date_suffix}.zip"
         zip_path = os.path.join(temp_dir, zip_filename)
         
         try:
@@ -438,8 +467,9 @@ def send_all_instance_backups(chat_id):
                         zf.write(file_path, rel_path)
             
             with open(zip_path, 'rb') as doc:
-                local_bot.send_document(chat_id, doc, caption=f"📦 [{h_name}] Backup: {srv_name}")
+                local_bot.send_document(chat_id, doc, caption=f"📦 [{h_name}] intance backup: {srv_name}")
                 
+            total_sent += 1
             print(f"[TelegramMonitor] Sent backup ZIP for {srv_name} ({h_name}) to owner.")
             time.sleep(delay)
         except Exception as e:
@@ -449,6 +479,8 @@ def send_all_instance_backups(chat_id):
             if os.path.exists(zip_path):
                 try: os.remove(zip_path)
                 except: pass
+
+    send_telegram_msg(chat_id, f"✅ *ALL INSTANCE BACKUPS COMPLETED!*\n🌐 Server: `{h_name}`\n📦 Total Zips Sent: {total_sent}")
 
 
 
@@ -467,16 +499,20 @@ def register_handlers():
             f"📊 *REPORTS & MONITORING*\n"
             f"• `/report` — Get hosting status report\n"
             f"• `/report 06:30 AM` — Set daily report time\n"
-            f"• `/hosts` — Show server info & status\n\n"
+            f"• `/status` — Show system & backup status\n"
+            f"• `/hosts` — Show server info & URL\n\n"
+            f"📦 *BACKUP COMMANDS*\n"
+            f"• `/backup` — Instant backup all instances\n"
+            f"• `/backup 3` — Set auto-backup interval (days)\n"
+            f"• `/backup_on` — Turn ON automated backups\n"
+            f"• `/backup_off` — Turn OFF automated backups\n\n"
             f"🔄 *INSTANCE CONTROL*\n"
             f"• `/restart all intance` — Restart all instances\n"
-            f"• `/restart` — Quick restart all instances\n"
-            f"• `/stop all` — Stop all running instances\n"
-            f"• `/stop` — Quick stop all instances\n\n"
+            f"• `/stop all` — Stop all instances\n\n"
             f"⚙️ *SETTINGS*\n"
             f"• `/dayleft 20` — Set remaining trial days\n"
             f"• `/dely 60` — Set ZIP backup delay (seconds)\n"
-            f"• `/help` — Show command menu\n"
+            f"• `/help` — Display this help menu\n"
             f"━━━━━━━━━━━━━━━━━━━━━"
         )
         bot.reply_to(message, help_text, parse_mode='Markdown')
@@ -496,6 +532,106 @@ def register_handlers():
             f"⚡ *Command Listener Status:* Active 🟢"
         )
         bot.reply_to(message, info_text, parse_mode='Markdown')
+
+    @bot.message_handler(commands=['backup_on'])
+    def handle_backup_on(message):
+        if not check_owner(message): return
+        config = read_config()
+        config['auto_backup'] = 'on'
+        write_config(config)
+        bot.reply_to(message, f"✅ Automated recurring backup turned *ON* (Every {config.get('backup_interval_days', 3)} days)", parse_mode='Markdown')
+
+    @bot.message_handler(commands=['backup_off'])
+    def handle_backup_off(message):
+        if not check_owner(message): return
+        config = read_config()
+        config['auto_backup'] = 'off'
+        write_config(config)
+        bot.reply_to(message, "🛑 Automated recurring backup turned *OFF*", parse_mode='Markdown')
+
+    @bot.message_handler(commands=['backup'])
+    def handle_backup(message):
+        if not check_owner(message): return
+        text = message.text.strip().lower()
+        parts = text.split()
+        
+        if len(parts) > 1:
+            arg = parts[1]
+            if arg in ('on', 'enable', '1'):
+                config = read_config()
+                config['auto_backup'] = 'on'
+                write_config(config)
+                bot.reply_to(message, f"✅ Automated recurring backup turned *ON* (Every {config.get('backup_interval_days', 3)} days)", parse_mode='Markdown')
+                return
+            elif arg in ('off', 'disable', '0'):
+                config = read_config()
+                config['auto_backup'] = 'off'
+                write_config(config)
+                bot.reply_to(message, "🛑 Automated recurring backup turned *OFF*", parse_mode='Markdown')
+                return
+            elif arg.isdigit():
+                val = int(arg)
+                if val < 1:
+                    bot.reply_to(message, "❌ Interval must be at least 1 day.")
+                    return
+                config = read_config()
+                config['backup_interval_days'] = val
+                config['auto_backup'] = 'on'
+                write_config(config)
+                bot.reply_to(message, f"⚙️ Automated backup interval set to *Every {val} Days* (Auto-Backup ON)", parse_mode='Markdown')
+                return
+
+        # Instant backup trigger for /backup, /backup instant, /backup all, etc.
+        bot.reply_to(message, "📦 Instant backup initiated for all instances...")
+        threading.Thread(target=send_all_instance_backups, args=(message.chat.id,), daemon=True).start()
+
+    @bot.message_handler(commands=['status'])
+    def handle_status(message):
+        if not check_owner(message): return
+        h_name = get_hosting_name()
+        host_url = get_hosting_url()
+        days_left = get_days_left()
+        config = read_config()
+        
+        auto_b = config.get('auto_backup', 'on').upper()
+        b_days = config.get('backup_interval_days', 3)
+        last_b = config.get('last_auto_backup_date') or 'Never'
+        
+        b_status_emoji = "🟢" if auto_b == 'ON' else "🔴"
+        
+        conn = get_db_conn()
+        try:
+            users_count = conn.execute("SELECT COUNT(*) as c FROM users").fetchone()['c']
+            servers = conn.execute("SELECT pid, status FROM servers").fetchall()
+        finally:
+            conn.close()
+            
+        running = sum(1 for s in servers if (s['status'] or '').lower() == 'running')
+        crashed = sum(1 for s in servers if (s['status'] or '').lower() == 'crashed')
+        stopped = len(servers) - running - crashed
+        
+        vmem = psutil.virtual_memory()
+        sys_ram_mb = round(vmem.used / (1024 * 1024), 1)
+        sys_ram_pct = round(vmem.percent, 1)
+        
+        status_text = (
+            f"📊 *IK HOST — SYSTEM STATUS*\n"
+            f"🌐 *Server:* `{h_name}`\n"
+            f"━━━━━━━━━━━━━━━━━━━━━\n"
+            f"🔗 *Panel URL:* {host_url}\n"
+            f"⏳ *Trial Days Left:* {days_left} Days\n"
+            f"⚡ *Bot Listener:* Active 🟢\n\n"
+            f"📦 *AUTOMATED BACKUPS*\n"
+            f"• *Status:* {b_status_emoji} `{auto_b}`\n"
+            f"• *Interval:* Every `{b_days}` Days\n"
+            f"• *Last Backup:* `{last_b}`\n\n"
+            f"🖥️ *HOSTING METRICS*\n"
+            f"• *Users:* {users_count}\n"
+            f"• *Instances:* {len(servers)} total (🟢 {running} | 🔴 {crashed} | ⚪ {stopped})\n"
+            f"• *System RAM:* {sys_ram_mb} MB ({sys_ram_pct}%)\n"
+            f"━━━━━━━━━━━━━━━━━━━━━"
+        )
+        bot.reply_to(message, status_text, parse_mode='Markdown')
 
     @bot.message_handler(commands=['report'])
     def handle_report(message):
@@ -697,8 +833,37 @@ def scheduler_loop():
                     print(f"[TelegramMonitor] Trial expiring warning triggered (Days left: {days_left})")
                     send_telegram_msg(owner_id, f"⚠️ *HOSTING EXPIRATION WARNING:* Only *{days_left}* days remaining on your hosting trial/subscription! Please renew soon.")
                 
+                # Check automated recurring backup trigger (default every 3 days)
+                auto_backup = config.get('auto_backup', 'on')
+                interval_days = int(config.get('backup_interval_days', 3))
+                last_backup_str = config.get('last_auto_backup_date', '')
+                h_name = get_hosting_name()
+
+                run_auto_backup = False
+                if auto_backup == 'on':
+                    if not last_backup_str:
+                        run_auto_backup = True
+                    else:
+                        try:
+                            last_dt = datetime.datetime.strptime(last_backup_str, '%Y-%m-%d')
+                            today_dt = datetime.datetime.strptime(current_date_str, '%Y-%m-%d')
+                            if (today_dt - last_dt).days >= interval_days:
+                                run_auto_backup = True
+                        except Exception:
+                            run_auto_backup = True
+
+                if run_auto_backup:
+                    print(f"[TelegramMonitor] Automated {interval_days}-day backup triggered at {current_time_str} BDT")
+                    send_telegram_msg(owner_id, f"📦 *AUTOMATED RECURRING BACKUP TRIGGERED (Every {interval_days} Days)*\n🌐 Server: `{h_name}`")
+                    config['last_auto_backup_date'] = current_date_str
+                    write_config(config)
+                    try:
+                        send_all_instance_backups(owner_id)
+                    except Exception as e_back:
+                        print(f"[TelegramMonitor] Error running automated backups: {e_back}")
+
                 # Check critical backups trigger (days_left <= 1) at the daily report time
-                if days_left <= 1:
+                if days_left <= 1 and not run_auto_backup:
                     print(f"[TelegramMonitor] Trial expiring backup triggered (Days left: {days_left})")
                     send_telegram_msg(owner_id, f"📦 *CRITICAL TRIAL BACKUP:* {days_left} Days remaining! Starting auto-backup zip transfers...")
                     try:
