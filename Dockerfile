@@ -6,7 +6,8 @@ RUN apt-get update && apt-get install -y \
     gnupg \
     && curl -fsSL https://deb.nodesource.com/setup_18.x | bash - \
     && apt-get install -y nodejs \
-    && rm -rf /var/lib/apt/lists/*
+    && apt-get purge -y --auto-remove curl gnupg \
+    && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
 WORKDIR /app
 
@@ -20,4 +21,4 @@ COPY . .
 # Railway automatically sets and exposes the PORT environment variable
 EXPOSE 5000
 
-CMD ["sh", "-c", "gunicorn -k gthread -w 1 --threads 8 --bind 0.0.0.0:${PORT:-5000} --timeout 120 app:app"]
+CMD ["sh", "-c", "gunicorn -k gthread -w 1 --threads 4 --bind 0.0.0.0:${PORT:-5000} --timeout 120 app:app"]
