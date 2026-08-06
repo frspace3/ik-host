@@ -1,15 +1,15 @@
-[2026-08-05 20:18:49] 🚀 Starting one-click deployment pipeline...
-[2026-08-05 20:18:49] ℹ No ZIP archive found (assuming script or raw file upload).
-[2026-08-05 20:18:49] 🔎 Scanning project files...
-[2026-08-05 20:18:49] ✓ Detected project type: FLASK
-[2026-08-05 20:18:49] 🔌 Allocating unique port...
-[2026-08-05 20:18:49] ✓ Assigned Port: 5002
-[2026-08-05 20:18:49] ✓ Public Route: http://localhost:5000/instance/dummy_flask_app
-[2026-08-05 20:18:49] 📝 Detecting startup command...
-[2026-08-05 20:18:49] ✓ Startup Command: python app.py
-[2026-08-05 20:18:49] 📦 Installing Python packages (pip install)...
-[2026-08-05 20:19:06] ✓ pip install finished.
-[2026-08-05 20:19:06] pip logs:
+[2026-08-06 19:17:53] 🚀 Starting one-click deployment pipeline...
+[2026-08-06 19:17:53] ℹ No ZIP archive found (assuming script or raw file upload).
+[2026-08-06 19:17:53] 🔎 Scanning project files...
+[2026-08-06 19:17:53] ✓ Detected project type: FLASK
+[2026-08-06 19:17:53] 🔌 Allocating unique port...
+[2026-08-06 19:17:53] ✓ Assigned Port: 5002
+[2026-08-06 19:17:53] ✓ Public Route: http://localhost:5000/instance/dummy_flask_app
+[2026-08-06 19:17:53] 📝 Detecting startup command...
+[2026-08-06 19:17:53] ✓ Startup Command: python app.py
+[2026-08-06 19:17:53] 📦 Installing Python packages (pip install)...
+[2026-08-06 19:18:00] ✓ pip install finished.
+[2026-08-06 19:18:00] pip logs:
 site-packages (from flask->-r requirements.txt (line 1)) (2.2.0)
 Requirement already satisfied: jinja2>=3.1.2 in C:\Users\Imran kaiser LP\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages (from flask->-r requirements.txt (line 1)) (3.1.6)
 Requirement already satisfied: markupsafe>=2.1.1 in C:\Users\Imran kaiser LP\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages (from flask->-r requirements.txt (line 1)) (3.0.3)
@@ -19,48 +19,16 @@ Requirement already satisfied: colorama in C:\Users\Imran kaiser LP\AppData\Loca
 [notice] A new release of pip is available: 26.1.1 -> 26.2.1
 [notice] To update, run: C:\Users\Imran kaiser LP\AppData\Local\Python\pythoncore-3.14-64\python.exe -m pip install --upgrade pip
 
-[2026-08-05 20:19:06] ✅ Deployment pipeline completed successfully!
+[2026-08-06 19:18:00] ✅ Deployment pipeline completed successfully!
 
-[2026-08-05 20:19:06] 🚀 Instance STARTED
+[2026-08-06 19:18:00] 🚀 Instance STARTED
  * Serving Flask app 'app'
  * Debug mode: off
 WARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.
  * Running on all addresses (0.0.0.0)
  * Running on http://127.0.0.1:5002
- * Running on http://192.168.0.232:5002
+ * Running on http://192.168.0.233:5002
 Press CTRL+C to quit
-127.0.0.1 - - [05/Aug/2026 20:19:10] "GET / HTTP/1.1" 200 -
-127.0.0.1 - - [05/Aug/2026 20:19:41] "GET /exploit-file HTTP/1.1" 404 -
-127.0.0.1 - - [05/Aug/2026 20:19:41] "GET / HTTP/1.1" 200 -
-127.0.0.1 - - [05/Aug/2026 20:32:23] "GET / HTTP/1.1" 200 -
-127.0.0.1 - - [05/Aug/2026 20:32:53] "GET /exploit-file HTTP/1.1" 404 -
-127.0.0.1 - - [05/Aug/2026 20:32:53] "GET / HTTP/1.1" 200 -
-ject files...
-[2026-08-05 20:32:16] ✓ Detected project type: FLASK
-[2026-08-05 20:32:16] 🔌 Allocating unique port...
-[2026-08-05 20:32:16] ✓ Assigned Port: 5002
-[2026-08-05 20:32:16] ✓ Public Route: http://localhost:5000/instance/dummy_flask_app
-[2026-08-05 20:32:16] 📝 Detecting startup command...
-[2026-08-05 20:32:16] ✓ Startup Command: python app.py
-[2026-08-05 20:32:16] 📦 Installing Python packages (pip install)...
-[2026-08-05 20:32:19] ✓ pip install finished.
-[2026-08-05 20:32:19] pip logs:
-site-packages (from flask->-r requirements.txt (line 1)) (2.2.0)
-Requirement already satisfied: jinja2>=3.1.2 in C:\Users\Imran kaiser LP\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages (from flask->-r requirements.txt (line 1)) (3.1.6)
-Requirement already satisfied: markupsafe>=2.1.1 in C:\Users\Imran kaiser LP\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages (from flask->-r requirements.txt (line 1)) (3.0.3)
-Requirement already satisfied: werkzeug>=3.1.0 in C:\Users\Imran kaiser LP\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages (from flask->-r requirements.txt (line 1)) (3.1.8)
-Requirement already satisfied: colorama in C:\Users\Imran kaiser LP\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages (from click>=8.1.3->flask->-r requirements.txt (line 1)) (0.4.6)
-
-[notice] A new release of pip is available: 26.1.1 -> 26.2.1
-[notice] To update, run: C:\Users\Imran kaiser LP\AppData\Local\Python\pythoncore-3.14-64\python.exe -m pip install --upgrade pip
-
-[2026-08-05 20:32:19] ✅ Deployment pipeline completed successfully!
-
-[2026-08-05 20:32:19] 🚀 Instance STARTED
- * Serving Flask app 'app'
- * Debug mode: off
-WARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.
- * Running on all addresses (0.0.0.0)
- * Running on http://127.0.0.1:5002
- * Running on http://192.168.0.232:5002
-Press CTRL+C to quit
+127.0.0.1 - - [06/Aug/2026 19:18:03] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [06/Aug/2026 19:18:29] "GET /exploit-file HTTP/1.1" 404 -
+127.0.0.1 - - [06/Aug/2026 19:18:29] "GET / HTTP/1.1" 200 -
