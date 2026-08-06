@@ -137,7 +137,7 @@ def kill_process_by_pid(pid):
                 pass
         parent.kill()
         try:
-            psutil.wait_procs(children + [parent], timeout=1.0)
+            psutil.wait_procs(children + [parent], timeout=0.1)
         except Exception:
             pass
     except Exception:
@@ -151,6 +151,18 @@ def kill_process_by_pid(pid):
                 os.kill(pid, signal.SIGTERM)
             except:
                 pass
+
+def _write_if_changed(filepath, content):
+    """Write file only if it doesn't exist or content differs."""
+    try:
+        if os.path.exists(filepath):
+            with open(filepath, 'r', encoding='utf-8') as f:
+                if f.read() == content:
+                    return  # Already up to date
+    except Exception:
+        pass
+    with open(filepath, 'w', encoding='utf-8') as f:
+        f.write(content)
 
 def start_instance_by_folder(folder, act='start'):
     with _start_lock:
@@ -270,8 +282,8 @@ try:
 except Exception:
     pass
 '''
-        with open(sc_path, 'w', encoding='utf-8') as f:
-            f.write(sc_code)
+        # Only write if missing or content changed (avoid unnecessary disk I/O on restarts)
+        _write_if_changed(sc_path, sc_code)
 
         # 2. Recreate security_preload.cjs dynamically
         js_path = os.path.join(path, 'security_preload.cjs')
@@ -291,8 +303,7 @@ except Exception:
     };
 } catch (e) {}
 '''
-        with open(js_path, 'w', encoding='utf-8') as f:
-            f.write(js_code)
+        _write_if_changed(js_path, js_code)
 
         flog = open(logpath, 'a', encoding='utf-8')
     except:
