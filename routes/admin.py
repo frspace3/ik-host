@@ -1,4 +1,5 @@
 import os, shutil, psutil, time, datetime, hmac
+import health_monitor
 import port_manager, telegram_monitor
 from helpers import get_db, kill_process_by_pid, api_success, api_error, running_procs, start_times, procs_lock, BASE_DIR
 from flask import Blueprint, render_template, request, redirect, url_for, session, jsonify, current_app
@@ -68,7 +69,7 @@ def admin_stats():
                           'role': u['role'], 'server_limit': u['server_limit'],
                           'ram_limit': ram_lim, 'cpu_limit': cpu_lim, 'created_at': u['created_at']})
     db.close()
-    return jsonify({'users': user_list, 'sys_cpu': f"{psutil.cpu_percent()}%", 'sys_ram': f"{psutil.virtual_memory().percent}%"})
+    return jsonify({'users': user_list, 'sys_cpu': f"{psutil.cpu_percent(interval=0.1)}%", 'sys_ram': f"{psutil.virtual_memory().percent}%"})
 
 @admin_bp.route('/api/v1/admin/users/update', methods=['POST'])
 def update_user():
@@ -259,7 +260,16 @@ def admin_create_user():
 def delete_user(uid):
     if not session.get('admin_logged'): return jsonify({'status': 'error'}), 403
     db = get_db()
-    srvs = db.execute('SELECT folder FROM servers WHERE user_id=?', (uid,)).fetchall()
+    srvs = db.execute('SELECT folder, pid FROM servers WHERE user_id=?', (uid,)).fetchall()
+    # Kill all running processes BEFORE deleting files/DB
+    for s in srvs:
+        folder = s['folder']
+        with procs_lock:
+            t_pid = running_procs[folder].pid if folder in running_procs else s['pid']
+            running_procs.pop(folder, None)
+            start_times.pop(folder, None)
+        if t_pid and psutil.pid_exists(t_pid):
+            kill_process_by_pid(t_pid)
     for s in srvs:
         p = os.path.join(current_app.config['BASE_STORAGE'], s['folder'])
         if os.path.exists(p): shutil.rmtree(p)
