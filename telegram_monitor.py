@@ -43,6 +43,7 @@ def read_config():
         'report_at': '06:30 AM',
         'zip_delay': 60,
         'hosting_name': '',
+        'panel_url': '',
         'owner_username': 'imran',
         'owner_password': '',
         'admin_username': 'imran112233',
@@ -65,6 +66,8 @@ def read_config():
                             config['report_at'] = val
                         elif key in ('hosting name', 'server name', 'hosting_name', 'server_name', 'host name', 'host_name'):
                             config['hosting_name'] = val
+                        elif key in ('panel url', 'panel_url', 'hosting url', 'hosting_url'):
+                            config['panel_url'] = val
                         elif key == 'zip_delay' or key == 'delay' or key == 'dely':
                             try:
                                 config['zip_delay'] = int(val)
@@ -110,6 +113,7 @@ def write_config(config):
             f.write(f"report at = {config.get('report_at', '06:30 AM')}\n")
             f.write(f"zip_delay = {config.get('zip_delay', 60)}\n")
             f.write(f"hosting name = {config.get('hosting_name', '')}\n")
+            f.write(f"panel url = {config.get('panel_url', '')}\n")
             f.write(f"user = {config.get('owner_username', 'imran')}\n")
             f.write(f"password = {config.get('owner_password', '')}\n\n")
             f.write(f"#Admin Panel Credentials\n")
@@ -179,16 +183,46 @@ def get_days_left():
     return 28
 
 def get_hosting_url():
+    # 1. Check config.txt for explicit panel url
+    config = read_config()
+    cfg_url = config.get('panel_url') or config.get('hosting_url')
+    if cfg_url and cfg_url.strip():
+        url = cfg_url.strip()
+        if not url.startswith('http://') and not url.startswith('https://'):
+            return f"https://{url}"
+        return url
+
+    # 2. Check Environment Variables (e.g. PANEL_URL, HOSTING_URL)
+    env_url = os.environ.get('PANEL_URL') or os.environ.get('HOSTING_URL')
+    if env_url and env_url.strip():
+        url = env_url.strip()
+        if not url.startswith('http://') and not url.startswith('https://'):
+            return f"https://{url}"
+        return url
+
+    # 3. Check Railway Environment Variables automatically (RAILWAY_PUBLIC_DOMAIN / RAILWAY_STATIC_URL)
+    railway_domain = os.environ.get('RAILWAY_PUBLIC_DOMAIN') or os.environ.get('RAILWAY_STATIC_URL')
+    if railway_domain and railway_domain.strip():
+        domain = railway_domain.strip()
+        if not domain.startswith('http://') and not domain.startswith('https://'):
+            return f"https://{domain}"
+        return domain
+
+    # 4. Search DB for non-localhost public_url
     conn = get_db_conn()
     try:
-        row = conn.execute("SELECT public_url FROM servers WHERE public_url IS NOT NULL AND public_url != '' LIMIT 1").fetchone()
+        rows = conn.execute("SELECT public_url FROM servers WHERE public_url IS NOT NULL AND public_url != ''").fetchall()
     finally:
         conn.close()
-    if row and row['public_url']:
+
+    for row in rows:
         url = row['public_url']
-        if '/instance/' in url:
-            return url.split('/instance/')[0]
-        return url
+        if url and '127.0.0.1' not in url and 'localhost' not in url:
+            if '/instance/' in url:
+                return url.split('/instance/')[0]
+            return url
+
+    # 5. Localhost fallback
     return "http://localhost:5000"
 
 def generate_report(host_url):
@@ -434,9 +468,11 @@ def register_handlers():
             f"• `/report` — Get hosting status report\n"
             f"• `/report 06:30 AM` — Set daily report time\n"
             f"• `/hosts` — Show server info & status\n\n"
-            f"🔄 *INSTANCE RESTART*\n"
+            f"🔄 *INSTANCE CONTROL*\n"
             f"• `/restart all intance` — Restart all instances\n"
-            f"• `/restart` — Quick restart all instances\n\n"
+            f"• `/restart` — Quick restart all instances\n"
+            f"• `/stop all` — Stop all running instances\n"
+            f"• `/stop` — Quick stop all instances\n\n"
             f"⚙️ *SETTINGS*\n"
             f"• `/dayleft 20` — Set remaining trial days\n"
             f"• `/dely 60` — Set ZIP backup delay (seconds)\n"
@@ -533,6 +569,39 @@ def register_handlers():
             threading.Thread(target=run_restarts, daemon=True).start()
         else:
             bot.reply_to(message, "❓ Unknown restart command. Use `/restart all intance` or `/restart` to restart all.")
+
+    @bot.message_handler(commands=['stop'])
+    def handle_stop(message):
+        if not check_owner(message): return
+        text = message.text.lower().strip()
+        is_all = any(kw in text for kw in ['all', 'instance', 'intance', 'bot', 'server']) or text == '/stop'
+        if is_all:
+            bot.reply_to(message, "🛑 Stopping all hosting instances...")
+            conn = get_db_conn()
+            try:
+                servers = conn.execute("SELECT folder FROM servers").fetchall()
+            finally:
+                conn.close()
+                
+            def run_stops():
+                stopped = []
+                for s in servers:
+                    folder = s['folder']
+                    try:
+                        from helpers import stop_instance_by_folder
+                        stop_instance_by_folder(folder)
+                        stopped.append(folder)
+                        time.sleep(0.1)
+                    except Exception as err:
+                        print(f"Error stopping {folder}: {err}")
+                try:
+                    bot.send_message(message.chat.id, f"🛑 Successfully stopped {len(stopped)} instances!")
+                except:
+                    pass
+                    
+            threading.Thread(target=run_stops, daemon=True).start()
+        else:
+            bot.reply_to(message, "❓ Unknown stop command. Use `/stop all` or `/stop` to stop all instances.")
 
 
 
