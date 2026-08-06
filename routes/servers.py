@@ -1,4 +1,5 @@
 import os, datetime, time, subprocess, sys, psutil, zipfile, shutil, re
+import health_monitor
 import port_manager, project_detector, deployment_manager, telegram_monitor
 from flask import Blueprint, request, session, jsonify, send_file, current_app
 from werkzeug.utils import secure_filename
@@ -41,9 +42,15 @@ def list_servers():
         uptime = get_precise_uptime(start_time_val) if (online and has_start_time) else ("Online" if online else "Offline")
         cpu, ram = "0%", "0MB"
         if online:
-            with procs_lock:
-                pid_ = running_procs[f].pid if f in running_procs else saved_pid
-            cpu, ram, _ = get_process_resources(pid_)
+            # Use cached metrics from health monitor (updated every 60s) instead of expensive live psutil calls
+            with health_monitor.metrics_cache_lock:
+                cached = health_monitor.metrics_cache.get(f)
+            if cached:
+                cpu, ram = cached['cpu'], cached['ram']
+            else:
+                with procs_lock:
+                    pid_ = running_procs[f].pid if f in running_procs else saved_pid
+                cpu, ram, _ = get_process_resources(pid_)
         srvs.append({
             'name': r['name'],
             'folder': f,
