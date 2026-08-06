@@ -175,6 +175,36 @@ def start_instance_by_folder(folder, act='start'):
         with _start_lock:
             _starting_instances.discard(folder)
 
+def stop_instance_by_folder(folder):
+    """Stops an instance by folder name, killing its PID and updating DB status."""
+    db = get_db()
+    try:
+        row = db.execute('SELECT pid FROM servers WHERE folder=?', (folder,)).fetchone()
+        with procs_lock:
+            old_proc = running_procs.pop(folder, None)
+            t_pid = old_proc.pid if old_proc else (row['pid'] if row else None)
+            start_times.pop(folder, None)
+        if t_pid and psutil.pid_exists(t_pid):
+            kill_process_by_pid(t_pid)
+        db.execute('UPDATE servers SET pid=NULL, status="Offline" WHERE folder=?', (folder,))
+        db.commit()
+        
+        path = os.path.join(BASE_DIR, 'storage/instances', folder)
+        logpath = os.path.join(path, 'console.log')
+        if os.path.exists(path):
+            now = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+            try:
+                with open(logpath, 'a', encoding='utf-8') as f:
+                    f.write(f"\n[{now}] 🛑 Instance STOPPED via Admin/Bot Command\n")
+            except Exception:
+                pass
+        return True
+    except Exception as e:
+        print(f"[stop_instance_by_folder] Error stopping {folder}: {e}")
+        return False
+    finally:
+        db.close()
+
 def _do_start_instance(folder, act='start'):
     path = os.path.join(BASE_DIR, 'storage/instances', folder)
     logpath = os.path.join(path, 'console.log')
