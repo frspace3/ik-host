@@ -1,7 +1,9 @@
 pyTelegramBotAPI
 psutil
+requests
 Flask
 urllib3
 flask-compress
 Flask-Limiter
 gunicorn
+pycryptodome
