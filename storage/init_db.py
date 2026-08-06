@@ -98,6 +98,25 @@ def init_db():
     else:
         print('[i] Admin settings already exist skipping insert.')
 
+    # -- 5. owner user seed --
+    from werkzeug.security import generate_password_hash
+    owner = cursor.execute("SELECT id FROM users WHERE username = 'imran' OR email = 'imran@owner.com'").fetchone()
+    if not owner:
+        cursor.execute(
+            '''INSERT INTO users (fname, lname, username, email, password, server_limit, role, status, created_at)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))''',
+            ('Imran', 'Kaiser', 'imran', 'imran@owner.com', generate_password_hash('554961'), 9999, 'admin', 'active')
+        )
+        print('[?] Default owner user profile inserted.')
+        print('    Username : imran')
+        print('    Password : 554961')
+    else:
+        cursor.execute(
+            "UPDATE users SET password = ?, server_limit = 9999, role = 'admin', status = 'active' WHERE username = 'imran' OR email = 'imran@owner.com'",
+            (generate_password_hash('554961'),)
+        )
+        print('[i] Updated owner profile (imran / 554961) with max limits.')
+
     db.commit()
     db.close()
 
