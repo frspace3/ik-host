@@ -205,6 +205,64 @@ def stop_instance_by_folder(folder):
     finally:
         db.close()
 
+def install_instance_requirements(instance_path, log_file=None):
+    """Recursively finds all requirements.txt files in instance_path and installs them with pip."""
+    if not instance_path or not os.path.isdir(instance_path):
+        return
+
+    req_files = []
+    for root, dirs, files in os.walk(instance_path):
+        dirs[:] = [d for d in dirs if d not in ('node_modules', '.git', '__pycache__', '.venv', 'venv')]
+        for f in files:
+            if f.lower() == 'requirements.txt':
+                req_files.append(os.path.join(root, f))
+
+    if not req_files:
+        return
+
+    python_exec = sys.executable or 'python'
+    now = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+
+    for req_path in req_files:
+        rel_req = os.path.relpath(req_path, instance_path)
+        header = f"[{now}] 📦 Auto-installing dependencies from {rel_req}...\n"
+        if log_file:
+            log_file.write(header)
+            log_file.flush()
+
+        try:
+            # Fix UTF-8 BOM if present
+            try:
+                with open(req_path, 'rb') as rf:
+                    content = rf.read()
+                if content.startswith(b'\xef\xbb\xbf'):
+                    content = content[3:]
+                    with open(req_path, 'wb') as wf:
+                        wf.write(content)
+            except Exception:
+                pass
+
+            res = subprocess.run(
+                [python_exec, '-m', 'pip', 'install', '--prefer-binary', '--no-cache-dir', '-r', req_path],
+                cwd=os.path.dirname(req_path),
+                stdout=subprocess.PIPE,
+                stderr=subprocess.STDOUT,
+                text=True,
+                timeout=180
+            )
+
+            if log_file:
+                if res.stdout:
+                    log_file.write(res.stdout[-1500:] + "\n")
+                log_file.write(f"[{now}] ✓ Finished installing {rel_req}\n")
+                log_file.flush()
+        except Exception as ex:
+            err_msg = f"[{now}] ⚠ Pip install error for {rel_req}: {ex}\n"
+            if log_file:
+                log_file.write(err_msg)
+                log_file.flush()
+            print(err_msg.strip())
+
 def _do_start_instance(folder, act='start'):
     path = os.path.join(BASE_DIR, 'storage/instances', folder)
     logpath = os.path.join(path, 'console.log')
@@ -369,22 +427,12 @@ except Exception:
     if assigned_port:
         cmd_run = cmd_run.replace('$PORT', str(assigned_port)).replace('%PORT%', str(assigned_port))
 
+    if cmd_run.endswith('.py') and not (cmd_run.startswith('python') or cmd_run.startswith('python3')):
+        python_cmd = 'python' if os.name == 'nt' else 'python3'
+        cmd_run = f"{python_cmd} {cmd_run}"
+
     # Auto-install requirements.txt if present inside instance directory
-    req_file = os.path.join(path, 'requirements.txt')
-    if os.path.isfile(req_file):
-        try:
-            flog.write(f"[{now}] 📦 Auto-checking requirements.txt dependencies...\n")
-            flog.flush()
-            python_exec = sys.executable or 'python'
-            subprocess.run(
-                [python_exec, '-m', 'pip', 'install', '-r', 'requirements.txt'],
-                cwd=path, stdout=flog, stderr=flog, timeout=120
-            )
-            flog.write(f"[{now}] ✓ Dependencies check complete.\n")
-            flog.flush()
-        except Exception as ex_req:
-            flog.write(f"[{now}] ⚠ Requirements auto-install warning: {ex_req}\n")
-            flog.flush()
+    install_instance_requirements(path, flog)
 
     popen_kwargs = {'cwd': path, 'stdout': flog, 'stderr': flog, 'stdin': subprocess.PIPE, 'env': env, 'shell': True}
     if os.name != 'nt':
