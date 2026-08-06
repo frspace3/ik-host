@@ -39,11 +39,15 @@ def create_app():
     # Set WAL mode once at startup
     try:
         import sqlite3
-        _init_conn = sqlite3.connect(os.path.join(helpers.BASE_DIR, 'storage/ikhost.db'), timeout=30.0)
+        _db_file = os.path.join(helpers.BASE_DIR, 'storage/ikhost.db')
+        _init_conn = sqlite3.connect(_db_file, timeout=30.0)
         _init_conn.execute("PRAGMA journal_mode=WAL")
         _init_conn.close()
-    except Exception:
-        pass
+
+        from storage.init_db import init_db
+        init_db()
+    except Exception as ex_db:
+        print(f"[App] DB init warning: {ex_db}")
 
     # Enable gzip compression & rate limiting
     Compress(app)
