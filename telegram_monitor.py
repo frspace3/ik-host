@@ -427,16 +427,21 @@ def register_handlers():
         if not check_owner(message): return
         h_name = get_hosting_name()
         help_text = (
-            f"🤖 *IK Host Monitor Bot Help*\n"
-            f"🌐 *Command Listener Server:* `{h_name}`\n\n"
-            "Commands:\n"
-            "• `/report` - Send hosting status report immediately\n"
-            "• `/hosts` - Show current hosting server info\n"
-            "• `/dely <seconds>` - Change the ZIP backup delay (e.g. `/dely 60`)\n"
-            "• `/restart all intance` - Restart all hosting instances\n"
-            "• `/report <time>` - Set daily report time BDT (e.g. `/report 06:30 AM`)\n"
-            "• `/dayleft <days>` - Set trial remaining days (e.g. `/dayleft 20`)\n"
-            "• `/help` - Show this help menu"
+            f"🤖 *IK HOST MONITOR BOT — HELP MENU*\n"
+            f"🌐 *Active Server:* `{h_name}`\n"
+            f"----------------------------------\n"
+            f"📊 *REPORTS & STATUS*\n"
+            f"• `/report` — Send hosting report immediately\n"
+            f"• `/report <time>` — Change daily report time BDT (e.g. `/report 06:30 AM` or `/report 18:30`)\n"
+            f"• `/hosts` — Show server info & listener status\n\n"
+            f"🔄 *INSTANCE MANAGEMENT*\n"
+            f"• `/restart all intance` — Restart all hosting instances\n"
+            f"• `/restart` — Quick restart all instances\n\n"
+            f"⚙️ *SETTINGS*\n"
+            f"• `/dayleft <days>` — Set trial remaining days (e.g. `/dayleft 20`)\n"
+            f"• `/dely <seconds>` — Set ZIP backup transfer delay (e.g. `/dely 60`)\n"
+            f"• `/help` — Display this help menu\n"
+            f"----------------------------------"
         )
         bot.reply_to(message, help_text, parse_mode='Markdown')
 
