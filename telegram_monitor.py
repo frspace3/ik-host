@@ -42,6 +42,7 @@ def read_config():
         'owner_id': '',
         'report_at': '06:30 AM',
         'zip_delay': 60,
+        'hosting_name': '',
         'owner_username': 'imran',
         'owner_password': '',
         'admin_username': 'imran112233',
@@ -62,6 +63,8 @@ def read_config():
                             config['owner_id'] = val
                         elif key == 'report at':
                             config['report_at'] = val
+                        elif key in ('hosting name', 'server name', 'hosting_name', 'server_name', 'host name', 'host_name'):
+                            config['hosting_name'] = val
                         elif key == 'zip_delay' or key == 'delay' or key == 'dely':
                             try:
                                 config['zip_delay'] = int(val)
@@ -84,6 +87,20 @@ def read_config():
     _config_cache_time = time.time()
     return config
 
+def get_hosting_name():
+    config = read_config()
+    name = config.get('hosting_name', '').strip()
+    if name:
+        return name
+    env_name = os.environ.get('HOSTING_NAME', '').strip()
+    if env_name:
+        return env_name
+    try:
+        import socket
+        return socket.gethostname()
+    except Exception:
+        return "IK Host"
+
 def write_config(config):
     config_path = os.path.join(BASE_DIR, 'config.txt')
     try:
@@ -92,6 +109,7 @@ def write_config(config):
             f.write(f"owner id = {config.get('owner_id', '')}\n")
             f.write(f"report at = {config.get('report_at', '06:30 AM')}\n")
             f.write(f"zip_delay = {config.get('zip_delay', 60)}\n")
+            f.write(f"hosting name = {config.get('hosting_name', '')}\n")
             f.write(f"user = {config.get('owner_username', 'imran')}\n")
             f.write(f"password = {config.get('owner_password', '')}\n\n")
             f.write(f"#Admin Panel Credentials\n")
@@ -214,8 +232,10 @@ def generate_report(host_url):
         srv_ram_map[s['id']] = ram_mb
         total_ram += ram_mb
         
+    h_name = get_hosting_name()
     report = []
     report.append("📊 *IK HOST MONITORING REPORT*")
+    report.append(f"🌐 *Hosting Server:* `{h_name}`")
     report.append("----------------------------------")
     report.append(f"🔗 *Panel URL:* {host_url}")
     report.append(f"⏳ *Trial Days Remaining:* {emoji} {days_left} Days Left")
@@ -262,21 +282,40 @@ def generate_report(host_url):
     return "\n".join(report)
 
 def send_telegram_msg(chat_id, text):
+    config = read_config()
+    token = config.get('bot_token')
+    if not token or token == 'YOUR_TELEGRAM_BOT_TOKEN':
+        return
+    
     with bot_lock:
         local_bot = bot
+
+    if not local_bot:
+        try:
+            local_bot = telebot.TeleBot(token)
+        except Exception as e_init:
+            print(f"[TelegramMonitor] Could not create TeleBot for sending: {e_init}")
+            local_bot = None
+
     if local_bot:
         try:
             local_bot.send_message(chat_id, text, parse_mode='Markdown')
         except Exception as e:
-            print(f"[TelegramMonitor] Error sending message: {e}")
+            try:
+                # Fallback to plain text if markdown formatting fails
+                local_bot.send_message(chat_id, text)
+            except Exception as e_plain:
+                print(f"[TelegramMonitor] Error sending message: {e_plain}")
 
 def notify_hacking_attempt(username, password_hash, instance_name, folder):
     config = read_config()
     owner_id = config['owner_id']
     if not owner_id: return
     
+    h_name = get_hosting_name()
     msg = (
         f"⚠️ *HACKING ATTEMPT DETECTED!*\n"
+        f"🌐 *Hosting Server:* `{h_name}`\n"
         f"User: {username}\n"
         f"Instance: {instance_name} ({folder})\n"
         f"Action: Attempted to access restricted resources."
@@ -314,7 +353,7 @@ def notify_hacking_attempt(username, password_hash, instance_name, folder):
                             rel_path = os.path.relpath(file_path, instance_path)
                             zf.write(file_path, rel_path)
                 with open(zip_path, 'rb') as doc:
-                    local_bot.send_document(owner_id, doc, caption=f"📦 Hacking Attempt Backup: {instance_name}")
+                    local_bot.send_document(owner_id, doc, caption=f"📦 [{h_name}] Hack Backup: {instance_name}")
                 print(f"[TelegramMonitor] Sent hacking backup ZIP for {instance_name} to owner.")
             except Exception as e:
                 print(f"[TelegramMonitor] Error zipping/sending hack backup for {instance_name}: {e}")
@@ -330,6 +369,7 @@ def send_all_instance_backups(chat_id):
     
     config = read_config()
     delay = config['zip_delay']
+    h_name = get_hosting_name()
     
     conn = get_db_conn()
     try:
@@ -364,9 +404,9 @@ def send_all_instance_backups(chat_id):
                         zf.write(file_path, rel_path)
             
             with open(zip_path, 'rb') as doc:
-                local_bot.send_document(chat_id, doc, caption=f"📦 Backup: {srv_name}")
+                local_bot.send_document(chat_id, doc, caption=f"📦 [{h_name}] Backup: {srv_name}")
                 
-            print(f"[TelegramMonitor] Sent backup ZIP for {srv_name} to owner.")
+            print(f"[TelegramMonitor] Sent backup ZIP for {srv_name} ({h_name}) to owner.")
             time.sleep(delay)
         except Exception as e:
             print(f"[TelegramMonitor] Error sending backup for {srv_name}: {e}")
@@ -385,17 +425,36 @@ def register_handlers():
     @bot.message_handler(commands=['help'])
     def handle_help(message):
         if not check_owner(message): return
+        h_name = get_hosting_name()
         help_text = (
-            "🤖 *IK Host Monitor Bot Help*\n\n"
+            f"🤖 *IK Host Monitor Bot Help*\n"
+            f"🌐 *Command Listener Server:* `{h_name}`\n\n"
             "Commands:\n"
             "• `/report` - Send hosting status report immediately\n"
+            "• `/hosts` - Show current hosting server info\n"
             "• `/dely <seconds>` - Change the ZIP backup delay (e.g. `/dely 60`)\n"
-            "• `/restart all intance` - Restart all hosting instances concurrently\n"
-            "• `/report <time>` - Set daily report time BDT (e.g. `/report 06:30 AM` or `/report 18:30`)\n"
+            "• `/restart all intance` - Restart all hosting instances\n"
+            "• `/report <time>` - Set daily report time BDT (e.g. `/report 06:30 AM`)\n"
             "• `/dayleft <days>` - Set trial remaining days (e.g. `/dayleft 20`)\n"
             "• `/help` - Show this help menu"
         )
         bot.reply_to(message, help_text, parse_mode='Markdown')
+
+    @bot.message_handler(commands=['hosts'])
+    def handle_hosts(message):
+        if not check_owner(message): return
+        h_name = get_hosting_name()
+        host_url = get_hosting_url()
+        days_left = get_days_left()
+        info_text = (
+            f"🌐 *HOSTING SERVER INFO*\n"
+            f"----------------------------------\n"
+            f"🖥️ *Server Name:* `{h_name}`\n"
+            f"🔗 *Panel URL:* {host_url}\n"
+            f"⏳ *Trial Days Left:* {days_left}\n"
+            f"⚡ *Command Listener Status:* Active 🟢"
+        )
+        bot.reply_to(message, info_text, parse_mode='Markdown')
 
     @bot.message_handler(commands=['report'])
     def handle_report(message):
@@ -580,10 +639,11 @@ def scheduler_loop():
 
 def start_bot_polling():
     global bot
+    import random
     while True:
         try:
             config = read_config()
-            token = config['bot_token']
+            token = config.get('bot_token')
             if not token or token == 'YOUR_TELEGRAM_BOT_TOKEN':
                 time.sleep(15)
                 continue
@@ -601,18 +661,20 @@ def start_bot_polling():
             except Exception:
                 pass
                 
-            print("[TelegramMonitor] Starting Telegram Bot polling loop...")
+            h_name = get_hosting_name()
+            print(f"[TelegramMonitor] Starting Telegram Bot polling loop for hosting server '{h_name}'...")
             local_bot.infinity_polling(timeout=30, long_polling_timeout=25, skip_pending=True)
         except telebot.apihelper.ApiTelegramException as e:
             if getattr(e, 'error_code', None) == 409:
-                print("[TelegramMonitor] ⚠️ Telegram Bot 409 Conflict: Another bot instance is currently running. Retrying in 10s...")
-                time.sleep(10)
+                jitter = random.randint(45, 90)
+                print(f"[TelegramMonitor] ℹ️ Multi-Hosting Standby: Another hosting panel is active for bot commands. Standby mode active (retrying polling in {jitter}s)...")
+                time.sleep(jitter)
             else:
-                print(f"[TelegramMonitor] Telegram API error: {e}. Retrying in 5s...")
-                time.sleep(5)
+                print(f"[TelegramMonitor] Telegram API error: {e}. Retrying in 10s...")
+                time.sleep(10)
         except Exception as e:
-            print(f"[TelegramMonitor] Bot polling error: {e}. Restarting polling loop in 5s...")
-            time.sleep(5)
+            print(f"[TelegramMonitor] Bot polling error: {e}. Restarting polling loop in 10s...")
+            time.sleep(10)
 
 def start_monitoring():
     """Starts the Telegram bot polling and daily scheduler in background threads."""
