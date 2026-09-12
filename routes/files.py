@@ -59,7 +59,10 @@ def fsave(folder):
     if not is_safe_path(instance_base, p):
         return api_error('Access denied', 403)
     try:
-        with open(p,'w',encoding='utf-8') as f: f.write(d.get('content',''))
+        content = d.get('content')
+        if content is None:
+            content = ''
+        with open(p,'w',encoding='utf-8') as f: f.write(content)
         return api_success('saved')
     except Exception as e:
         return api_error(str(e))
@@ -112,7 +115,7 @@ def create_file_route(folder):
     if not is_safe_path(instance_base, p):
         return api_error('Access denied', 403)
     try:
-        with open(p,'w') as f: f.write('')
+        with open(p, 'w', encoding='utf-8') as f: f.write('')
         return api_success('success')
     except Exception as e:
         return api_error(str(e))
