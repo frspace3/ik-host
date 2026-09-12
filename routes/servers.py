@@ -110,6 +110,9 @@ def add_srv():
         return api_error('Server name cannot be empty', 400)
     db = get_db()
     user = db.execute('SELECT * FROM users WHERE id=?', (session['user_id'],)).fetchone()
+    if not user:
+        db.close()
+        return api_error('User not found', 404)
     count = db.execute('SELECT COUNT(*) as c FROM servers WHERE user_id=?', (session['user_id'],)).fetchone()['c']
     if user['role'] != 'admin' and count >= user['server_limit']:
         db.close()
