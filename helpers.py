@@ -498,7 +498,8 @@ def init_db():
         server_limit  INTEGER DEFAULT 1,
         notifications TEXT    DEFAULT '',
         ram_limit     INTEGER DEFAULT 100,
-        cpu_limit     INTEGER DEFAULT 100
+        cpu_limit     INTEGER DEFAULT 100,
+        created_at    TEXT    DEFAULT NULL
     )''')
     db.execute('''CREATE TABLE IF NOT EXISTS servers (
         id            INTEGER PRIMARY KEY AUTOINCREMENT,
