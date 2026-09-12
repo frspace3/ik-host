@@ -190,7 +190,7 @@ def run_health_checks():
                                 role = srv['role']
                                 if role != 'admin':
                                     # 1. RAM limit check
-                                    limit = float(srv['ram_limit'] or 100)
+                                    limit = float(srv['ram_limit']) if srv['ram_limit'] is not None else 100.0
                                     total_rss = 0
                                     try:
                                         total_rss += p.memory_info().rss
@@ -215,7 +215,7 @@ def run_health_checks():
 
                                     # 2. CPU limit check
                                     if online:
-                                        cpu_limit = float(srv['cpu_limit'] or 100)
+                                        cpu_limit = float(srv['cpu_limit']) if srv['cpu_limit'] is not None else 100.0
                                         total_cpu = 0
                                         try:
                                             total_cpu += p.cpu_percent(interval=None)
