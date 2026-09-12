@@ -12,10 +12,10 @@ _http_pool = urllib3.PoolManager(
     timeout=urllib3.Timeout(connect=5.0, read=20.0)
 )
 
-@proxy_bp.route('/instance/<folder>', defaults={'path': ''}, methods=['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'])
-@proxy_bp.route('/instance/<folder>/<path:path>', methods=['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'])
-@proxy_bp.route('/apps/<folder>', defaults={'path': ''}, methods=['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'])
-@proxy_bp.route('/apps/<folder>/<path:path>', methods=['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'])
+@proxy_bp.route('/instance/<folder>', defaults={'path': ''}, methods=['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'], strict_slashes=False)
+@proxy_bp.route('/instance/<folder>/<path:path>', methods=['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'], strict_slashes=False)
+@proxy_bp.route('/apps/<folder>', defaults={'path': ''}, methods=['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'], strict_slashes=False)
+@proxy_bp.route('/apps/<folder>/<path:path>', methods=['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'], strict_slashes=False)
 def proxy_instance_traffic(folder, path):
     db = get_db()
     srv = db.execute('SELECT assigned_port, status, server_status, folder FROM servers WHERE folder=? OR name=?', (folder, folder)).fetchone()
@@ -36,7 +36,7 @@ def proxy_instance_traffic(folder, path):
         
     target_url = f"http://127.0.0.1:{srv['assigned_port']}/{path}"
     if request.query_string:
-        target_url += f"?{request.query_string.decode('utf-8')}"
+        target_url += f"?{request.query_string.decode('utf-8', errors='replace')}"
         
     try:
         headers = {key: value for key, value in request.headers if key.lower() not in ['host', 'content-length', 'transfer-encoding']}
