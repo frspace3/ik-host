@@ -120,6 +120,31 @@ def logout():
     return redirect(url_for('auth_bp.login'))
 
 
+def parse_created_at(ts_str):
+    if not ts_str:
+        return None
+    s = str(ts_str).strip()
+    try:
+        dt = datetime.datetime.fromisoformat(s.replace('Z', '+00:00'))
+        if dt.tzinfo is not None:
+            dt = dt.replace(tzinfo=None)
+        return dt
+    except Exception:
+        pass
+    for fmt in (
+        '%Y-%m-%d %H:%M:%S.%f',
+        '%Y-%m-%d %H:%M:%S',
+        '%Y-%m-%dT%H:%M:%S.%f',
+        '%Y-%m-%dT%H:%M:%S',
+        '%Y-%m-%d',
+    ):
+        try:
+            return datetime.datetime.strptime(s, fmt)
+        except ValueError:
+            pass
+    return None
+
+
 @auth_bp.route('/dashboard')
 def dashboard():
     if 'user_id' not in session: return redirect(url_for('auth_bp.login'))
@@ -143,9 +168,10 @@ def dashboard():
     days_left = 28
     if created_at_str:
         try:
-            created_at_dt = datetime.datetime.strptime(created_at_str, '%Y-%m-%d %H:%M:%S')
-            delta = datetime.datetime.now() - created_at_dt
-            days_left = max(0, 28 - delta.days)
+            created_at_dt = parse_created_at(created_at_str)
+            if created_at_dt:
+                delta = datetime.datetime.now() - created_at_dt
+                days_left = max(0, 28 - delta.days)
         except Exception as e:
             current_app.logger.error(f"Error parsing created_at: {e}")
             
