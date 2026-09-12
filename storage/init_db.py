@@ -1,7 +1,8 @@
 import os
 import sqlite3
 
-DB_DIR  = os.path.join(os.getcwd(), 'storage')
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+DB_DIR  = os.path.join(BASE_DIR, 'storage')
 DB_PATH = os.path.join(DB_DIR, 'ikhost.db')
 
 def get_db():
@@ -29,7 +30,10 @@ def init_db():
             role          TEXT    DEFAULT 'free',
             status        TEXT    DEFAULT 'active',
             server_limit  INTEGER DEFAULT 1,
-            notifications TEXT    DEFAULT ''
+            notifications TEXT    DEFAULT '',
+            ram_limit     INTEGER DEFAULT 100,
+            cpu_limit     INTEGER DEFAULT 100,
+            created_at    TEXT    DEFAULT NULL
         )
     ''')
 
@@ -81,6 +85,16 @@ def init_db():
             show_popup  INTEGER DEFAULT 0
         )
     ''')
+
+    cursor.execute("PRAGMA table_info(users)")
+    u_columns = [row['name'] for row in cursor.fetchall()]
+    if 'ram_limit' not in u_columns:
+        cursor.execute("ALTER TABLE users ADD COLUMN ram_limit INTEGER DEFAULT 100")
+    if 'cpu_limit' not in u_columns:
+        cursor.execute("ALTER TABLE users ADD COLUMN cpu_limit INTEGER DEFAULT 100")
+    if 'created_at' not in u_columns:
+        cursor.execute("ALTER TABLE users ADD COLUMN created_at TEXT DEFAULT NULL")
+
 
     existing = cursor.execute(
         'SELECT id FROM admin_settings WHERE id = 1'
