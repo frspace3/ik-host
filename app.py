@@ -34,20 +34,19 @@ def create_app():
 
     os.makedirs(app.config['BASE_STORAGE'], exist_ok=True)
     os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
-    helpers.init_db()
 
-    # Set WAL mode once at startup
+    # Set WAL mode once at startup and initialize DB
     try:
         import sqlite3
         _db_file = os.path.join(helpers.BASE_DIR, 'storage/ikhost.db')
+        os.makedirs(os.path.join(helpers.BASE_DIR, 'storage'), exist_ok=True)
         _init_conn = sqlite3.connect(_db_file, timeout=30.0)
         _init_conn.execute("PRAGMA journal_mode=WAL")
         _init_conn.close()
-
-        from storage.init_db import init_db
-        init_db()
     except Exception as ex_db:
-        print(f"[App] DB init warning: {ex_db}")
+        print(f"[App] DB WAL mode warning: {ex_db}")
+
+    helpers.init_db()
 
     # Enable gzip compression & rate limiting
     Compress(app)
