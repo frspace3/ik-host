@@ -84,11 +84,22 @@ def update_user():
         return jsonify({'status': 'error', 'msg': 'User not found'}), 404
     role = d.get('role', current['role'])
     status = d.get('status', current['status'])
+
+    limit_val = d.get('limit')
+    if limit_val is None:
+        limit_val = current['server_limit']
+    ram_val = d.get('ram_limit')
+    if ram_val is None:
+        ram_val = current['ram_limit']
+    cpu_val = d.get('cpu_limit')
+    if cpu_val is None:
+        cpu_val = current['cpu_limit']
+
     try:
-        limit = int(d.get('limit', current['server_limit']))
-        ram_limit = int(d.get('ram_limit', current['ram_limit']))
-        cpu_limit = int(d.get('cpu_limit', current['cpu_limit']))
-    except ValueError:
+        limit = int(limit_val) if limit_val is not None else 1
+        ram_limit = int(ram_val) if ram_val is not None else 100
+        cpu_limit = int(cpu_val) if cpu_val is not None else 100
+    except (ValueError, TypeError):
         db.close()
         return jsonify({'status': 'error', 'msg': 'Limits must be integers'}), 400
     db.execute('UPDATE users SET role=?,status=?,server_limit=?,ram_limit=?,cpu_limit=? WHERE id=?',
@@ -102,9 +113,11 @@ def bulk_limit_users():
     if not session.get('admin_logged'): return jsonify({'status': 'error'}), 403
     d = request.json or {}
     try:
-        ram_lim = int(d.get('ram_limit', 100))
-        cpu_lim = int(d.get('cpu_limit', 100))
-    except ValueError:
+        ram_val = d.get('ram_limit')
+        ram_lim = int(ram_val) if ram_val is not None else 100
+        cpu_val = d.get('cpu_limit')
+        cpu_lim = int(cpu_val) if cpu_val is not None else 100
+    except (ValueError, TypeError):
         return jsonify({'status': 'error', 'msg': 'Limits must be integers'}), 400
     db = get_db()
     db.execute('UPDATE users SET ram_limit=?, cpu_limit=? WHERE role != "admin"', (ram_lim, cpu_lim))
@@ -241,8 +254,9 @@ def admin_create_user():
         pwd = str(pwd)
     hashed = generate_password_hash(pwd)
     try:
-        limit = int(d.get('limit', 1))
-    except ValueError:
+        lim_val = d.get('limit')
+        limit = int(lim_val) if lim_val is not None else 1
+    except (ValueError, TypeError):
         limit = 1
     db = get_db()
     try:
