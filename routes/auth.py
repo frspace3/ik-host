@@ -67,8 +67,8 @@ def login():
         
         # Read owner credentials from config.txt
         owner_config = telegram_monitor.read_config()
-        owner_username = owner_config.get('owner_username', 'imran').strip().lower()
-        owner_password = owner_config.get('owner_password', '').strip()
+        owner_username = (owner_config.get('owner_username') or 'imran').strip().lower()
+        owner_password = (owner_config.get('owner_password') or owner_config.get('password') or '554961').strip()
         
         is_owner_login = False
         if owner_password:
