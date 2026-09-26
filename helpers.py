@@ -413,7 +413,8 @@ except Exception:
         env['PLATFORM_PORT'] = str(os.environ.get('PORT', 5000))
 
         preload_path = os.path.join(path, 'security_preload.cjs')
-        env['NODE_OPTIONS'] = f'--require "{preload_path.replace("\\", "/")}"'
+        preload_path_normalized = preload_path.replace('\\', '/')
+        env['NODE_OPTIONS'] = f'--require "{preload_path_normalized}"'
 
         # Add instance path to PYTHONPATH to ensure sitecustomize.py is loaded early
         existing_pythonpath = env.get('PYTHONPATH', '')
