@@ -269,38 +269,38 @@ def _do_start_instance(folder, act='start'):
     now = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
 
     db = get_db()
-    row = db.execute('SELECT pid,startup,assigned_port FROM servers WHERE folder=?', (folder,)).fetchone()
-    if not row:
-        db.close()
-        return False
-
-    old_pid = row['pid']
-    startup = row['startup'] or 'main.py'
-    assigned_port = row['assigned_port']
-
-    is_owner = False
-    user_row = db.execute('SELECT username FROM users WHERE id = (SELECT user_id FROM servers WHERE folder = ?)', (folder,)).fetchone()
-    if user_row:
-        owner_config = telegram_monitor.read_config()
-        owner_username = owner_config.get('owner_username', 'imran').strip().lower()
-        if user_row['username'].strip().lower() == owner_username:
-            is_owner = True
-
-    # Kill old process if running and pop from tracking dictionary
-    with procs_lock:
-        old_proc = running_procs.pop(folder, None)
-        t_pid = old_proc.pid if old_proc else old_pid
-        start_times.pop(folder, None)
-
-    if t_pid and psutil.pid_exists(t_pid):
-        kill_process_by_pid(t_pid)
-
     try:
-        os.makedirs(path, exist_ok=True)
+        row = db.execute('SELECT pid,startup,assigned_port FROM servers WHERE folder=?', (folder,)).fetchone()
+        if not row:
+            return False
 
-        # 1. Recreate sitecustomize.py dynamically
-        sc_path = os.path.join(path, 'sitecustomize.py')
-        sc_code = r'''import os
+        old_pid = row['pid']
+        startup = row['startup'] or 'main.py'
+        assigned_port = row['assigned_port']
+
+        is_owner = False
+        user_row = db.execute('SELECT username FROM users WHERE id = (SELECT user_id FROM servers WHERE folder = ?)', (folder,)).fetchone()
+        if user_row:
+            owner_config = telegram_monitor.read_config()
+            owner_username = owner_config.get('owner_username', 'imran').strip().lower()
+            if user_row['username'].strip().lower() == owner_username:
+                is_owner = True
+
+        # Kill old process if running and pop from tracking dictionary
+        with procs_lock:
+            old_proc = running_procs.pop(folder, None)
+            t_pid = old_proc.pid if old_proc else old_pid
+            start_times.pop(folder, None)
+
+        if t_pid and psutil.pid_exists(t_pid):
+            kill_process_by_pid(t_pid)
+
+        try:
+            os.makedirs(path, exist_ok=True)
+
+            # 1. Recreate sitecustomize.py dynamically
+            sc_path = os.path.join(path, 'sitecustomize.py')
+            sc_code = r'''import os
 import sys
 import socket
 
@@ -370,12 +370,12 @@ try:
 except Exception:
     pass
 '''
-        # Only write if missing or content changed (avoid unnecessary disk I/O on restarts)
-        _write_if_changed(sc_path, sc_code)
+            # Only write if missing or content changed (avoid unnecessary disk I/O on restarts)
+            _write_if_changed(sc_path, sc_code)
 
-        # 2. Recreate security_preload.cjs dynamically
-        js_path = os.path.join(path, 'security_preload.cjs')
-        js_code = r'''try {
+            # 2. Recreate security_preload.cjs dynamically
+            js_path = os.path.join(path, 'security_preload.cjs')
+            js_code = r'''try {
     const net = require('net');
     const originalListen = net.Server.prototype.listen;
     net.Server.prototype.listen = function(...args) {
@@ -391,81 +391,81 @@ except Exception:
     };
 } catch (e) {}
 '''
-        _write_if_changed(js_path, js_code)
+            _write_if_changed(js_path, js_code)
 
-        flog = open(logpath, 'a', encoding='utf-8')
-    except:
-        try:
-            flog = open(logpath, 'a')
-        except Exception as e:
-            db.close()
-            return False
+            flog = open(logpath, 'a', encoding='utf-8')
+        except:
+            try:
+                flog = open(logpath, 'a')
+            except Exception as e:
+                return False
 
-    flog.write(f"\n[{now}] 🚀 Instance {act.upper()}ED\n")
-    flog.flush()
+        flog.write(f"\n[{now}] 🚀 Instance {act.upper()}ED\n")
+        flog.flush()
 
-    env = os.environ.copy()
-    env.pop('WERKZEUG_SERVER_FD', None)
-    env.pop('WERKZEUG_RUN_MAIN', None)
-    if assigned_port:
-        env['PORT'] = str(assigned_port)
-        env['HOST'] = '0.0.0.0'
-    env['INSTANCE_ID'] = folder
-    env['PLATFORM_PORT'] = str(os.environ.get('PORT', 5000))
+        env = os.environ.copy()
+        env.pop('WERKZEUG_SERVER_FD', None)
+        env.pop('WERKZEUG_RUN_MAIN', None)
+        if assigned_port:
+            env['PORT'] = str(assigned_port)
+            env['HOST'] = '0.0.0.0'
+        env['INSTANCE_ID'] = folder
+        env['PLATFORM_PORT'] = str(os.environ.get('PORT', 5000))
 
-    preload_path = os.path.join(path, 'security_preload.cjs')
-    env['NODE_OPTIONS'] = f'--require "{preload_path}"'
+        preload_path = os.path.join(path, 'security_preload.cjs')
+        env['NODE_OPTIONS'] = f'--require "{preload_path.replace("\\", "/")}"'
 
-    # Add instance path to PYTHONPATH to ensure sitecustomize.py is loaded early
-    existing_pythonpath = env.get('PYTHONPATH', '')
-    if existing_pythonpath:
-        env['PYTHONPATH'] = path + os.pathsep + existing_pythonpath
-    else:
-        env['PYTHONPATH'] = path
-
-    cmd_run = startup
-    if assigned_port:
-        cmd_run = cmd_run.replace('$PORT', str(assigned_port)).replace('%PORT%', str(assigned_port))
-
-    if cmd_run.endswith('.py') and not (cmd_run.startswith('python') or cmd_run.startswith('python3')):
-        python_cmd = 'python' if os.name == 'nt' else 'python3'
-        cmd_run = f"{python_cmd} {cmd_run}"
-
-    # Auto-install requirements.txt if present inside instance directory
-    install_instance_requirements(path, flog)
-
-    popen_kwargs = {'cwd': path, 'stdout': flog, 'stderr': flog, 'stdin': subprocess.PIPE, 'env': env, 'shell': True}
-    if os.name != 'nt':
-        popen_kwargs['preexec_fn'] = os.setsid
-
-    try:
-        proc = subprocess.Popen(cmd_run, **popen_kwargs)
-        with procs_lock:
-            running_procs[folder] = proc
-            start_times[folder] = time.time()
-        if act in ['start', 'restart']:
-            db.execute('UPDATE servers SET pid=?, status="Running", restart_count=0 WHERE folder=?', (proc.pid, folder))
+        # Add instance path to PYTHONPATH to ensure sitecustomize.py is loaded early
+        existing_pythonpath = env.get('PYTHONPATH', '')
+        if existing_pythonpath:
+            env['PYTHONPATH'] = path + os.pathsep + existing_pythonpath
         else:
-            db.execute('UPDATE servers SET pid=?, status="Running" WHERE folder=?', (proc.pid, folder))
-        db.commit()
-        db.close()
+            env['PYTHONPATH'] = path
+
+        cmd_run = startup
+        if assigned_port:
+            cmd_run = cmd_run.replace('$PORT', str(assigned_port)).replace('%PORT%', str(assigned_port))
+
+        cmd_parts = cmd_run.strip().split()
+        if cmd_parts and cmd_parts[0].endswith('.py') and not (cmd_parts[0].startswith('python') or cmd_run.startswith('python ') or cmd_run.startswith('python3 ')):
+            python_cmd = 'python' if os.name == 'nt' else 'python3'
+            cmd_run = f"{python_cmd} {cmd_run}"
+
+        # Auto-install requirements.txt if present inside instance directory
+        install_instance_requirements(path, flog)
+
+        popen_kwargs = {'cwd': path, 'stdout': flog, 'stderr': flog, 'stdin': subprocess.PIPE, 'env': env, 'shell': True}
+        if os.name != 'nt':
+            popen_kwargs['preexec_fn'] = os.setsid
+
         try:
-            flog.close()
-        except:
-            pass
-        return True
-    except Exception as e:
-        try:
-            if flog and not flog.closed:
-                flog.write(f"[{now}] ✗ Failed to start: {str(e)}\n")
+            proc = subprocess.Popen(cmd_run, **popen_kwargs)
+            with procs_lock:
+                running_procs[folder] = proc
+                start_times[folder] = time.time()
+            if act in ['start', 'restart']:
+                db.execute('UPDATE servers SET pid=?, status="Running", restart_count=0 WHERE folder=?', (proc.pid, folder))
+            else:
+                db.execute('UPDATE servers SET pid=?, status="Running" WHERE folder=?', (proc.pid, folder))
+            db.commit()
+            try:
                 flog.close()
-        except:
-            pass
+            except:
+                pass
+            return True
+        except Exception as e:
+            try:
+                if flog and not flog.closed:
+                    flog.write(f"[{now}] ✗ Failed to start: {str(e)}\n")
+                    flog.close()
+            except:
+                pass
+            return False
+    finally:
         try:
             db.close()
-        except:
+        except Exception:
             pass
-        return False
 
 # ─── Database Initialization ───────────────────────────────────────────────────
 def _is_valid_sqlite(path):
