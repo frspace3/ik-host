@@ -5,6 +5,12 @@ from helpers import get_db, is_safe_path, check_server_access, flatten_extracted
 
 files_bp = Blueprint('files_bp', __name__, url_prefix='/api/v1/files')
 
+def is_protected_file(path_or_name):
+    if not path_or_name:
+        return False
+    base = os.path.basename(str(path_or_name)).lower()
+    return base in [pf.lower() for pf in PROTECTED_FILES]
+
 @files_bp.route('/<folder>/list')
 def flist(folder):
     allowed, err = check_server_access(folder)
@@ -16,8 +22,8 @@ def flist(folder):
     if not os.path.isdir(full): return jsonify([])
     items = []
     for f in sorted(os.listdir(full)):
-        if f in ['console.log'] + PROTECTED_FILES: continue
         p = os.path.join(full, f)
+        if f in ['console.log'] or is_protected_file(f) or is_protected_file(p): continue
         items.append({'name':f,'is_dir':os.path.isdir(p),'is_zip':f.lower().endswith('.zip')})
     return jsonify(items)
 
@@ -28,9 +34,9 @@ def fread(folder):
     name = request.args.get('name','')
     sub  = request.args.get('path','')
     instance_base = os.path.abspath(os.path.join(current_app.config['BASE_STORAGE'], folder))
-    if name in PROTECTED_FILES:
-        return jsonify({'content':'Access denied'}), 403
     p = os.path.abspath(os.path.join(instance_base, sub, name))
+    if is_protected_file(name) or is_protected_file(p):
+        return jsonify({'content':'Access denied'}), 403
     if not is_safe_path(instance_base, p):
         return jsonify({'content':'Access denied'}), 403
     try:
@@ -53,9 +59,9 @@ def fsave(folder):
     if not isinstance(name, str) or not isinstance(sub, str):
         return api_error('Invalid parameters', 400)
     instance_base = os.path.abspath(os.path.join(current_app.config['BASE_STORAGE'], folder))
-    if name in PROTECTED_FILES:
-        return api_error('Access denied', 403)
     p = os.path.abspath(os.path.join(instance_base, sub, name))
+    if is_protected_file(name) or is_protected_file(p):
+        return api_error('Access denied', 403)
     if not is_safe_path(instance_base, p):
         return api_error('Access denied', 403)
     try:
@@ -89,8 +95,8 @@ def delete_bulk(folder):
         return api_error('Directory not found', 404)
     if not names: names = [f for f in os.listdir(base) if f != 'console.log']
     for name in names:
-        if name in ['console.log'] + PROTECTED_FILES: continue
         p = os.path.abspath(os.path.join(base, name))
+        if name == 'console.log' or is_protected_file(name) or is_protected_file(p): continue
         if not is_safe_path(instance_base, p): continue
         try:
             if os.path.isdir(p): shutil.rmtree(p)
@@ -109,9 +115,9 @@ def create_file_route(folder):
         return api_error('Invalid parameters', 400)
     instance_base = os.path.abspath(os.path.join(current_app.config['BASE_STORAGE'], folder))
     name = secure_filename(name_val)
-    if name in PROTECTED_FILES:
-        return api_error('Access denied', 403)
     p = os.path.abspath(os.path.join(instance_base, sub_val, name))
+    if is_protected_file(name) or is_protected_file(p):
+        return api_error('Access denied', 403)
     if not is_safe_path(instance_base, p):
         return api_error('Access denied', 403)
     try:
@@ -131,9 +137,9 @@ def create_folder_route(folder):
         return api_error('Invalid parameters', 400)
     instance_base = os.path.abspath(os.path.join(current_app.config['BASE_STORAGE'], folder))
     name = secure_filename(name_val)
-    if name in PROTECTED_FILES:
-        return api_error('Access denied', 403)
     p = os.path.abspath(os.path.join(instance_base, sub_val, name))
+    if is_protected_file(name) or is_protected_file(p):
+        return api_error('Access denied', 403)
     if not is_safe_path(instance_base, p):
         return api_error('Access denied', 403)
     try:
@@ -157,9 +163,9 @@ def upload_file(folder):
         
     os.makedirs(dest, exist_ok=True)
     filename = secure_filename(file.filename)
-    if filename in PROTECTED_FILES:
-        return api_error('Access denied', 403)
     filepath = os.path.abspath(os.path.join(dest, filename))
+    if is_protected_file(filename) or is_protected_file(filepath):
+        return api_error('Access denied', 403)
     if not is_safe_path(instance_base, filepath):
         return api_error('Access denied', 403)
     
@@ -194,10 +200,10 @@ def rename_file(folder):
     if not is_safe_path(instance_base, base):
         return api_error('Access denied', 403)
     try:
-        if old_val in PROTECTED_FILES or new_val in PROTECTED_FILES:
-            return api_error('Access denied', 403)
         old_p = os.path.abspath(os.path.join(base, old_val))
         new_p = os.path.abspath(os.path.join(base, new_val))
+        if is_protected_file(old_val) or is_protected_file(new_val) or is_protected_file(old_p) or is_protected_file(new_p):
+            return api_error('Access denied', 403)
         if not is_safe_path(instance_base, old_p) or not is_safe_path(instance_base, new_p):
             return api_error('Access denied', 403)
         os.rename(old_p, new_p)
@@ -211,8 +217,8 @@ def download_file(folder, name):
     if not allowed: return err
     sub = request.args.get('path','')
     instance_base = os.path.abspath(os.path.join(current_app.config['BASE_STORAGE'], folder))
-    if name in PROTECTED_FILES: return "Access Denied", 403
     p = os.path.abspath(os.path.join(instance_base, sub, name))
+    if is_protected_file(name) or is_protected_file(p): return "Access Denied", 403
     if not is_safe_path(instance_base, p): return "Access Denied", 403
     if not os.path.isfile(p): return "Not found", 404
     return send_file(p, as_attachment=True)
@@ -252,14 +258,15 @@ def zip_bulk(folder):
         return api_error('Access denied', 403)
     with zipfile.ZipFile(zpath,'w') as z:
         for n in names:
-            if n in PROTECTED_FILES: continue
             p = os.path.abspath(os.path.join(base, n))
+            if is_protected_file(n) or is_protected_file(p): continue
             if not is_safe_path(instance_base, p): continue
             if n == zname: continue
             if os.path.isdir(p):
                 for root,_,files in os.walk(p):
                     for file in files:
                         fp = os.path.abspath(os.path.join(root, file))
+                        if is_protected_file(file) or is_protected_file(fp): continue
                         if is_safe_path(instance_base, fp):
                             z.write(fp, os.path.relpath(fp, base))
             elif os.path.exists(p): z.write(p, n)
@@ -306,11 +313,13 @@ def unzip_file(folder):
             f.write(f"\n[{now}] 📂 Extracting {zname}...\n")
         
         with zipfile.ZipFile(zpath,'r') as z:
-            # Zip Slip Validation
+            # Zip Slip & Protected File Validation
             for member in z.infolist():
                 target_member_path = os.path.abspath(os.path.join(base, member.filename))
                 if not is_safe_path(instance_base, target_member_path):
                     raise Exception(f"Directory traversal detected in ZIP: {member.filename}")
+                if is_protected_file(member.filename) or is_protected_file(target_member_path):
+                    raise Exception(f"Cannot overwrite protected file: {member.filename}")
             z.extractall(base)
         
         os.remove(zpath)
@@ -354,10 +363,9 @@ def copy_bulk(folder):
     copied_count = 0
     for name in names:
         if not isinstance(name, str): continue
-        if name in ['console.log'] + PROTECTED_FILES: continue
-        
         src_file = os.path.abspath(os.path.join(source_dir, name))
         dst_file = os.path.abspath(os.path.join(target_dir, name))
+        if name == 'console.log' or is_protected_file(name) or is_protected_file(src_file) or is_protected_file(dst_file): continue
         
         if not is_safe_path(instance_base, src_file) or not is_safe_path(instance_base, dst_file):
             continue
@@ -401,10 +409,9 @@ def move_bulk(folder):
     moved_count = 0
     for name in names:
         if not isinstance(name, str): continue
-        if name in ['console.log'] + PROTECTED_FILES: continue
-        
         src_file = os.path.abspath(os.path.join(source_dir, name))
         dst_file = os.path.abspath(os.path.join(target_dir, name))
+        if name == 'console.log' or is_protected_file(name) or is_protected_file(src_file) or is_protected_file(dst_file): continue
         
         if not is_safe_path(instance_base, src_file) or not is_safe_path(instance_base, dst_file):
             continue
