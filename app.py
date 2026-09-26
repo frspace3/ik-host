@@ -1,5 +1,5 @@
-import os
-from flask import Flask, render_template, request, redirect, session
+import os, hmac
+from flask import Flask, render_template, request, redirect, session, jsonify
 from flask_compress import Compress
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
@@ -94,14 +94,18 @@ def create_app():
         ):
             return
         if not session.get('master_unlocked'):
+            if request.path.startswith('/api'):
+                return jsonify({'status': 'error', 'msg': 'Master gateway locked'}), 401
             return render_template('web/master_gateway.html')
 
     @app.route('/unlock-gateway', methods=['GET', 'POST'])
     @limiter.limit("5 per minute")
     def unlock_gateway():
         if request.method == 'POST':
-            pwd = request.form.get('password')
-            if pwd == '554961':
+            pwd = request.form.get('password', '').strip()
+            owner_config = telegram_monitor.read_config()
+            owner_pass = (owner_config.get('owner_password') or owner_config.get('password') or '554961').strip()
+            if pwd and (pwd == owner_pass or hmac.compare_digest(pwd, owner_pass)):
                 session['master_unlocked'] = True
                 next_url = request.args.get('next', '/')
                 if not next_url.startswith('/') or next_url.startswith('//'):
