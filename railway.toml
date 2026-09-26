@@ -1,0 +1,5 @@
+[build]
+builder = "DOCKER"
+
+[build.args]
+CACHEBUST = "1"
