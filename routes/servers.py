@@ -34,7 +34,8 @@ def list_servers():
                 pass
         if not online:
             with procs_lock:
-                if f in running_procs and running_procs[f].poll() is None: 
+                proc = running_procs.get(f)
+                if proc and proc.poll() is None: 
                     online = True
         with procs_lock:
             start_time_val = start_times.get(f)
@@ -49,7 +50,8 @@ def list_servers():
                 cpu, ram = cached['cpu'], cached['ram']
             else:
                 with procs_lock:
-                    pid_ = running_procs[f].pid if f in running_procs else saved_pid
+                    proc = running_procs.get(f)
+                    pid_ = proc.pid if proc else saved_pid
                 cpu, ram, _ = get_process_resources(pid_)
         srvs.append({
             'name': r['name'],
@@ -145,10 +147,13 @@ def server_action(folder, act):
     if act == 'install':
         req = os.path.join(path, 'requirements.txt')
         if os.path.exists(req):
+            with open(logpath, 'a', encoding='utf-8') as flog_init:
+                flog_init.write(f"\n[{now}] 📦 Installing packages...\n")
             flog = open(logpath, 'a', encoding='utf-8')
-            flog.write(f"\n[{now}] 📦 Installing packages...\n")
-            flog.flush()
-            subprocess.Popen([sys.executable, '-m', 'pip', 'install', '-r', 'requirements.txt'], cwd=path, stdout=flog, stderr=flog)
+            try:
+                subprocess.Popen([sys.executable, '-m', 'pip', 'install', '-r', 'requirements.txt'], cwd=path, stdout=flog, stderr=flog)
+            finally:
+                flog.close()
             db.close()
             return api_success('installing')
         db.close()
@@ -165,8 +170,8 @@ def server_action(folder, act):
     if act == 'stop':
         row = db.execute('SELECT pid FROM servers WHERE folder=?', (folder,)).fetchone()
         with procs_lock:
-            t_pid = running_procs[folder].pid if folder in running_procs else (row['pid'] if row else None)
-            running_procs.pop(folder, None)
+            old_proc = running_procs.pop(folder, None)
+            t_pid = old_proc.pid if old_proc else (row['pid'] if row else None)
             start_times.pop(folder, None)
         if t_pid and psutil.pid_exists(t_pid):
             kill_process_by_pid(t_pid)
@@ -337,8 +342,8 @@ def delete_server(folder):
         db.close()
         return api_error('Suspended servers cannot be deleted!', 403)
     with procs_lock:
-        t_pid = running_procs[folder].pid if folder in running_procs else srv['pid']
-        running_procs.pop(folder, None)
+        old_proc = running_procs.pop(folder, None)
+        t_pid = old_proc.pid if old_proc else srv['pid']
         start_times.pop(folder, None)
     if t_pid and psutil.pid_exists(t_pid):
         kill_process_by_pid(t_pid)
@@ -386,11 +391,19 @@ def download_server_zip(folder):
     zip_path = os.path.join(temp_dir, zip_filename)
     
     try:
+        def is_protected_file(path_or_name):
+            if not path_or_name:
+                return False
+            base = os.path.basename(str(path_or_name)).lower()
+            return base in [pf.lower() for pf in PROTECTED_FILES] or base == 'console.log'
+
         with zipfile.ZipFile(zip_path, 'w', zipfile.ZIP_DEFLATED) as zf:
             for root, dirs, files in os.walk(instance_base):
                 for file in files:
                     file_path = os.path.join(root, file)
                     rel_path = os.path.relpath(file_path, instance_base)
+                    if is_protected_file(file) or is_protected_file(file_path):
+                        continue
                     if is_safe_path(instance_base, file_path):
                         zf.write(file_path, rel_path)
                         
