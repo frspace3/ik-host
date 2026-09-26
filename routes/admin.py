@@ -11,17 +11,43 @@ admin_bp = Blueprint('admin_bp', __name__)
 @admin_bp.route('/admin-login', methods=['GET', 'POST'])
 def admin_login():
     if request.method == 'POST':
-        user = request.form.get('username', '')
-        pwd = request.form.get('password', '')
+        user = request.form.get('username', '').strip()
+        pwd = request.form.get('password', '').strip()
         
-        owner_config = telegram_monitor.read_config()
-        admin_user = owner_config.get('admin_username', 'imran112233').strip()
-        admin_pass = owner_config.get('admin_password', '').strip()
+        valid = False
+        db = get_db()
+        admin_row = db.execute('SELECT username, password FROM admin_settings WHERE id=1').fetchone()
+        db.close()
         
-        if not admin_user or not admin_pass:
-            return render_template('web/admin_login.html')
-            
-        if user == admin_user and hmac.compare_digest(pwd, admin_pass):
+        if admin_row:
+            db_user = (admin_row['username'] or '').strip()
+            db_pass = (admin_row['password'] or '').strip()
+            if user == db_user and db_user:
+                if db_pass:
+                    if pwd == db_pass:
+                        valid = True
+                    else:
+                        try:
+                            if check_password_hash(db_pass, pwd):
+                                valid = True
+                        except Exception:
+                            pass
+
+        if not valid:
+            owner_config = telegram_monitor.read_config()
+            admin_user = owner_config.get('admin_username', 'imran112233').strip()
+            admin_pass = owner_config.get('admin_password', 'imran112233').strip()
+            if admin_user and admin_pass and user == admin_user:
+                if pwd == admin_pass:
+                    valid = True
+                else:
+                    try:
+                        if check_password_hash(admin_pass, pwd):
+                            valid = True
+                    except Exception:
+                        pass
+                        
+        if valid:
             session['admin_logged'] = True
             return redirect(url_for('admin_bp.admin_panel'))
     return render_template('web/admin_login.html')
@@ -60,7 +86,8 @@ def admin_stats():
                 except: pass
             else:
                 with procs_lock:
-                    if s['folder'] in running_procs and running_procs[s['folder']].poll() is None: on = True
+                    proc = running_procs.get(s['folder'])
+                    if proc and proc.poll() is None: on = True
             if on: act += 1
         ram_lim = u['ram_limit'] if 'ram_limit' in u.keys() else 100
         cpu_lim = u['cpu_limit'] if 'cpu_limit' in u.keys() else 100
@@ -190,7 +217,8 @@ def admin_manage_user_servers(uid):
     for r in rows:
         f = r['folder']
         with procs_lock:
-            online = (f in running_procs and running_procs[f].poll() is None) or (r['pid'] and psutil.pid_exists(r['pid']))
+            proc = running_procs.get(f)
+            online = (proc is not None and proc.poll() is None) or (r['pid'] and psutil.pid_exists(r['pid']))
         servers.append({'id': r['id'], 'name': r['name'], 'folder': f, 'online': online, 'status': r['server_status']})
     return render_template('web/admin_manage_user.html', user=user, servers=servers)
 
@@ -217,8 +245,8 @@ def admin_delete_server(sid):
         return jsonify({'status': 'error', 'msg': 'Not found'}), 404
     folder = srv['folder']
     with procs_lock:
-        t_pid = running_procs[folder].pid if folder in running_procs else srv['pid']
-        running_procs.pop(folder, None)
+        old_proc = running_procs.pop(folder, None)
+        t_pid = old_proc.pid if old_proc else srv['pid']
         start_times.pop(folder, None)
     if t_pid and psutil.pid_exists(t_pid):
         kill_process_by_pid(t_pid)
@@ -279,8 +307,8 @@ def delete_user(uid):
     for s in srvs:
         folder = s['folder']
         with procs_lock:
-            t_pid = running_procs[folder].pid if folder in running_procs else s['pid']
-            running_procs.pop(folder, None)
+            old_proc = running_procs.pop(folder, None)
+            t_pid = old_proc.pid if old_proc else s['pid']
             start_times.pop(folder, None)
         if t_pid and psutil.pid_exists(t_pid):
             kill_process_by_pid(t_pid)
