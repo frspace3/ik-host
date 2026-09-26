@@ -1,3 +1,4 @@
+# IK Host Helpers - Production Build 2026-09-26
 import os, sqlite3, zipfile, subprocess, signal, shutil, psutil, time, datetime, sys, threading
 from flask import has_app_context, g, jsonify, session, request
 from werkzeug.security import generate_password_hash, check_password_hash
