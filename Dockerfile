@@ -16,7 +16,7 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy all project files
-ARG CACHEBUST=1
+ARG CACHEBUST=202609262248
 COPY . .
 
 # Railway automatically sets and exposes the PORT environment variable
