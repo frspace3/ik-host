@@ -48,9 +48,9 @@ def read_config():
         'backup_interval_days': 3,
         'last_auto_backup_date': '',
         'owner_username': 'imran',
-        'owner_password': '',
+        'owner_password': '554961',
         'admin_username': 'imran112233',
-        'admin_password': ''
+        'admin_password': 'imran112233'
     }
     config_path = os.path.join(BASE_DIR, 'config.txt')
     if os.path.exists(config_path):
@@ -85,19 +85,29 @@ def read_config():
                                 config['zip_delay'] = int(val)
                             except:
                                 pass
-                        elif key == 'owner username' or key == 'owner user' or key == 'user':
+                        elif key in ('owner username', 'owner user', 'user', 'owner_username', 'owner_user'):
                             config['owner_username'] = val
-                        elif key == 'owner password' or key == 'owner pass' or key == 'password':
+                        elif key in ('owner password', 'owner pass', 'password', 'owner_password', 'owner_pass'):
                             config['owner_password'] = val
-                        elif key == 'admin panel username' or key == 'admin username':
+                        elif key in ('admin panel username', 'admin username', 'admin_panel_username', 'admin_username'):
                             config['admin_username'] = val
-                        elif key == 'admin panel password' or key == 'admin password':
+                        elif key in ('admin panel password', 'admin password', 'admin_panel_password', 'admin_password'):
                             config['admin_password'] = val
         except Exception as e:
             print(f"[TelegramMonitor] Error reading config.txt: {e}")
     else:
         # Create a default blank config file
         write_config(config)
+
+    if not config.get('owner_username'):
+        config['owner_username'] = 'imran'
+    if not config.get('owner_password'):
+        config['owner_password'] = '554961'
+    if not config.get('admin_username'):
+        config['admin_username'] = 'imran112233'
+    if not config.get('admin_password'):
+        config['admin_password'] = 'imran112233'
+
     _config_cache = dict(config)
     _config_cache_time = time.time()
     return config
