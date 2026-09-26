@@ -8,7 +8,7 @@ import port_manager
 import project_detector
 import startup_detector
 import proxy_manager
-from helpers import is_safe_path, flatten_extracted_folder
+from helpers import is_safe_path, flatten_extracted_folder, _write_if_changed
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DB_PATH = os.path.join(BASE_DIR, 'storage/ikhost.db')
@@ -139,7 +139,8 @@ def run_deployment_pipeline(folder, request_host):
         # Create sitecustomize.py to automatically force the assigned port for Flask/FastAPI/Uvicorn/etc.
         if port:
             sc_path = os.path.join(path, 'sitecustomize.py')
-            patch_code = '''import os
+            patch_code = r'''import os
+import sys
 import socket
 
 # Low-level socket bind patch to force the assigned port
@@ -174,6 +175,23 @@ try:
 except Exception:
     pass
 
+# Auto-patch Flask-SocketIO to listen on the assigned port
+try:
+    import flask_socketio
+    if not hasattr(flask_socketio.SocketIO, '_original_run'):
+        flask_socketio.SocketIO._original_run = flask_socketio.SocketIO.run
+        def patched_socketio_run(self, app, host=None, port=None, *args, **kwargs):
+            env_port = os.environ.get("PORT")
+            if env_port:
+                port = int(env_port)
+            env_host = os.environ.get("HOST")
+            if env_host:
+                host = env_host
+            return flask_socketio.SocketIO._original_run(self, app, host=host, port=port, *args, **kwargs)
+        flask_socketio.SocketIO.run = patched_socketio_run
+except Exception:
+    pass
+
 # Auto-patch Uvicorn to listen on the assigned port
 try:
     import uvicorn
@@ -192,15 +210,7 @@ except Exception:
     pass
 '''
             try:
-                if os.path.exists(sc_path):
-                    with open(sc_path, 'r', encoding='utf-8', errors='ignore') as fsc_r:
-                        existing_content = fsc_r.read()
-                    if "patched_bind" not in existing_content:
-                        with open(sc_path, 'a', encoding='utf-8') as fsc:
-                            fsc.write("\n" + patch_code)
-                else:
-                    with open(sc_path, 'w', encoding='utf-8') as fsc:
-                        fsc.write(patch_code)
+                _write_if_changed(sc_path, patch_code)
             except Exception as e_sc:
                 log(f"⚠ Warning: Failed to write sitecustomize.py: {e_sc}")
 
